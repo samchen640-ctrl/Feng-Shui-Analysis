@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -7,599 +7,867 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>AI 風水分析</title>
+    <title>AI 風水分析 - 行動端增強版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        fengshui: {
+                            gold: '#d4a574',
+                            goldHover: '#b8864e',
+                            jade: '#5a8f7b',
+                            jadeLight: '#8fc0ae',
+                            dark: '#0d0d1a',
+                            panel: 'rgba(255, 255, 255, 0.05)',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { -webkit-tap-highlight-color: transparent; }
         body {
-            font-family: -apple-system, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
-            background: linear-gradient(160deg, #0d0d1a 0%, #1a1a2e 40%, #0f3460 100%);
-            min-height: 100vh; min-height: 100dvh;
-            display: flex; justify-content: center; align-items: flex-start;
-            padding: 24px 16px 16px;
-            padding-top: max(24px, env(safe-area-inset-top));
-            padding-right: max(16px, env(safe-area-inset-right));
-            padding-bottom: max(16px, env(safe-area-inset-bottom));
-            padding-left: max(16px, env(safe-area-inset-left));
-            -webkit-text-size-adjust: 100%;
-            text-size-adjust: 100%;
-            overflow-x: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang TC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(160deg, #0d0d1a 0%, #1a1a2e 45%, #0f2b48 100%);
+            min-height: 100vh;
+            min-height: 100dvh;
         }
-        .container {
-            max-width: 800px; width: 100%;
-            background: rgba(255,255,255,0.04);
-            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-            border-radius: 20px; padding: 28px 24px;
-            border: 1px solid rgba(255,255,255,0.08);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        .custom-glass {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
         }
-        .header { text-align: center; margin-bottom: 28px; }
-        .header h1 {
-            color: #f0e6d3; font-size: 28px; font-weight: 700;
-            letter-spacing: 3px;
-        }
-        .header h1 span { color: #d4a574; }
-        .header p { color: rgba(240,230,211,0.45); font-size: 13px; margin-top: 4px; letter-spacing: 1px; }
-        .header .badge {
-            display: inline-block; margin-top: 6px;
-            padding: 3px 12px; border-radius: 10px;
-            font-size: 10px; letter-spacing: 1px;
-            background: rgba(90,143,123,0.15); color: #8fc0ae;
-            border: 1px solid rgba(90,143,123,0.2);
-        }
-        .header .badge.warn { background: rgba(212,165,116,0.12); color: #d4a574; border-color: rgba(212,165,116,0.2); }
-
-        .card {
-            background: rgba(255,255,255,0.05);
-            border-radius: 16px; padding: 20px;
-            border: 1px solid rgba(255,255,255,0.06);
-            margin-bottom: 16px;
-        }
-        .card-title {
-            color: #d4a574; font-size: 14px; font-weight: 600;
-            letter-spacing: 1.5px; margin-bottom: 16px;
-            display: flex; align-items: center; justify-content: space-between; gap: 8px;
-        }
-        .card-title .info-btn {
-            font-size: 11px; color: rgba(240,230,211,0.35); cursor: pointer;
-            background: none; border: none; padding: 4px;
-        }
-
-        .form-group { margin-bottom: 14px; }
-        .form-group label {
-            display: flex; align-items: center; gap: 6px;
-            color: rgba(240,230,211,0.6);
-            font-size: 12px; font-weight: 500; letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-        .form-group label .optional { color: rgba(240,230,211,0.25); font-weight: 400; }
-        .form-group input {
-            width: 100%; padding: 12px 14px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px; color: #f0e6d3;
-            font-size: 16px; outline: none;
-            transition: border 0.3s;
-        }
-        .form-group input:focus { border-color: #d4a574; }
-        .form-group input::placeholder { color: rgba(240,230,211,0.25); }
-
-        .btn {
-            display: inline-flex; align-items: center; justify-content: center;
-            padding: 12px 20px; border: none; border-radius: 10px;
-            font-size: 14px; font-weight: 600; letter-spacing: 0.5px;
-            cursor: pointer; transition: all 0.25s;
-            color: #f0e6d3; min-height: 44px;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .btn:active { transform: scale(0.97); }
-        .btn-primary { background: linear-gradient(135deg, #d4a574, #b8864e); width: 100%; }
-        .btn-primary:active { box-shadow: 0 4px 15px rgba(212,165,116,0.3); }
-        .btn-secondary { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); flex: 1 1 0; }
-        .btn-secondary:active { background: rgba(255,255,255,0.15); }
-        .btn-success { background: linear-gradient(135deg, #5a8f7b, #3d7a63); flex: 1 1 0; }
-        .btn-success:active { box-shadow: 0 4px 15px rgba(90,143,123,0.3); }
-        .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-        .btn-row .btn { min-width: 0; }
-        .btn-sm { padding: 8px 14px; font-size: 12px; min-height: 36px; }
-        .btn-outline {
-            background: transparent; border: 1px solid rgba(212,165,116,0.3);
-            color: #d4a574; padding: 6px 14px; font-size: 11px; border-radius: 8px; cursor: pointer;
-            touch-action: manipulation; white-space: nowrap;
-        }
-        .btn-outline.danger { border-color: rgba(180,80,80,0.35); color: #e8a0a0; }
-
-        .key-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
         .key-secure { -webkit-text-security: disc; }
         .key-secure.visible { -webkit-text-security: none; }
-        .key-note {
-            margin-top: 8px; font-size: 11px; line-height: 1.6;
-            color: rgba(212,165,116,0.75); word-break: break-word;
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.92); }
         }
-        .key-note.warn { color: #e8a0a0; }
-
-        .camera-box {
-            width: 100%; height: 220px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 12px; overflow: hidden;
-            position: relative;
-            border: 1px solid rgba(255,255,255,0.08);
-        }
-        .camera-box video { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .cam-placeholder {
-            position: absolute; inset: 0;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            color: rgba(240,230,211,0.25);
-            font-size: 13px; pointer-events: none;
-        }
-        .cam-placeholder .icon { font-size: 40px; margin-bottom: 8px; opacity: 0.5; }
-
-        .model-badge {
-            display: none; align-items: center; justify-content: space-between;
-            margin-top: 14px; padding: 8px 16px;
-            background: rgba(212,165,116,0.1);
-            border: 1px solid rgba(212,165,116,0.2);
-            border-radius: 20px; color: #d4a574; font-size: 13px; gap: 8px;
-        }
-        .model-badge.show { display: flex; }
-        .model-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: #5a8f7b; animation: pulse 2s infinite; flex-shrink: 0; }
-        .model-badge .model-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-        #statusMessage {
-            margin-top: 16px; padding: 14px 18px;
-            border-radius: 12px; font-size: 14px; line-height: 1.6;
-            display: none; word-break: break-word;
-            animation: fadeSlide 0.35s ease;
-        }
-        #statusMessage.success { background: rgba(90,143,123,0.2); border: 1px solid rgba(90,143,123,0.3); color: #b5d9cb; }
-        #statusMessage.error { background: rgba(180,80,80,0.2); border: 1px solid rgba(180,80,80,0.3); color: #e8a0a0; }
-        #statusMessage.info { background: rgba(212,165,116,0.12); border: 1px solid rgba(212,165,116,0.2); color: #e8d5b8; }
-
-        .help-box {
-            margin-top: 12px; padding: 12px 14px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);
-            font-size: 12px; color: rgba(240,230,211,0.4); line-height: 1.7;
-            display: none;
-        }
-        .help-box.show { display: block; }
-        .help-box code {
-            background: rgba(255,255,255,0.06); padding: 1px 6px;
-            border-radius: 4px; font-size: 11px; color: #d4a574;
-        }
-
-        .footer { text-align: center; margin-top: 20px; color: rgba(240,230,211,0.18); font-size: 11px; letter-spacing: 1px; }
-
-        @keyframes fadeSlide { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-        @media (max-width: 480px) {
-            body { padding: 16px 10px 10px; }
-            body { padding-top: max(16px, env(safe-area-inset-top)); padding-right: max(10px, env(safe-area-inset-right)); padding-bottom: max(10px, env(safe-area-inset-bottom)); padding-left: max(10px, env(safe-area-inset-left)); }
-            .container { padding: 20px 16px; border-radius: 16px; }
-            .header h1 { font-size: 24px; }
-            .camera-box { height: 190px; }
-            .btn { font-size: 13px; padding: 11px 14px; }
-            .help-box { font-size: 11px; }
-        }
-        @media (max-width: 360px) {
-            .btn-row { flex-direction: column; }
-            .btn-row .btn { flex: 1 1 auto; width: 100%; }
-            .camera-box { height: 160px; }
-        }
-        @media (max-width: 767px) and (orientation: landscape) and (max-height: 500px) {
-            body { padding-top: max(8px, env(safe-area-inset-top)); }
-            .container { padding-top: 14px; }
-            .camera-box { height: 110px; }
-            .header { margin-bottom: 12px; }
-        }
-        @media (min-width: 768px) {
-            .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-            body { align-items: center; }
-        }
+        .animate-pulse-slow { animation: pulse-slow 2.5s infinite ease-in-out; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>✦ <span>風水</span> 分析</h1>
-            <p>AI 環境風水智能分析系統</p>
-            <div class="badge" id="protocolBadge">🌐 偵測協定中...</div>
-        </div>
+<body class="text-neutral-100 flex justify-center p-3 sm:p-6 select-none sm:select-auto">
 
-        <div class="two-col">
-            <div class="card">
-                <div class="card-title">
-                    ⚙ API 設定
-                    <button class="info-btn" onclick="toggleHelp()" title="說明">?</button>
-                </div>
-                <div class="form-group">
-                    <label>LM-STUDIO API URL</label>
-                    <input type="text" id="apiUrl" placeholder="http://192.168.x.x:1234/v1" inputmode="url" autocomplete="url" autocapitalize="off" autocorrect="off" spellcheck="false">
-                </div>
-                <div class="form-group">
-                    <label>API KEY <span class="optional">（選填）</span></label>
-                    <input type="text" id="apiKey" class="key-secure" placeholder="sk-..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
-                    <div class="key-row">
-                        <button type="button" class="btn-outline" id="keyToggle" onclick="toggleKeyVisibility()">👁 顯示 Key</button>
-                        <button type="button" class="btn-outline" onclick="connectToLMStudio(true)">🔓 免 Key 測試</button>
-                        <button type="button" class="btn-outline danger" onclick="clearStoredKey()">🗑 清除已存 Key</button>
-                    </div>
-                    <div class="key-note" id="keyNote" style="display:none;"></div>
-                </div>
-                <div class="form-group">
-                    <label>
-                        CORS Proxy <span class="optional">（選填，HTTPS→HTTP 用）</span>
-                    </label>
-                    <input type="text" id="proxyUrl" placeholder="留空 = 直接連接" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false">
-                </div>
-                <button class="btn btn-primary" onclick="connectToLMStudio()">⟳ 測試連接</button>
-                <div class="model-badge" id="modelBadge">
-                    <span class="dot"></span>
-                    <span class="model-name" id="modelName">未連接</span>
-                    <span id="modelCount" style="font-size:11px;opacity:0.6"></span>
-                </div>
-
-                <div class="help-box" id="helpBox">
-                    <strong style="color:#d4a574;">連線方式與 401 故障排查：</strong><br>
-                    • <strong>為什麼手機會出現 401？</strong><br>
-                    &nbsp;&nbsp;1. <strong>CORS Proxy 剝除 Header</strong>：許多免費 Proxy 會拔掉 <code>Authorization</code>。建議使用無驗證的 cloudflared 穿透，或使用允許傳遞 Header 的自建 Proxy。<br>
-                    &nbsp;&nbsp;2. <strong>LM-Studio Token 設定</strong>：若在 LM-Studio 的 Developer 頁面開啟了 <code>Require Authentication</code>，請確保這裡輸入的是對應產生的 API Token。<br>
-                    &nbsp;&nbsp;3. <strong>Cloudflare Access 阻擋</strong>：若使用了 Cloudflare Access 保護網域，請暫時關閉 Access Policy 或將手機 IP 加白。<br><br>
-                    • <strong>推薦穿透（免 Proxy）</strong>：終端機執行<br>
-                    &nbsp;&nbsp;<code>cloudflared tunnel --url http://localhost:1234</code><br>
-                    &nbsp;&nbsp;直接將產生的 <code>https://xxx.trycloudflare.com</code> 填入 API URL，此時 Proxy 欄位留空。
-                </div>
+    <div class="max-w-4xl w-full custom-glass rounded-3xl p-4 sm:p-7 transition-all my-auto">
+        <!-- 頂部標題區 -->
+        <header class="text-center mb-6">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs tracking-wider mb-2 font-medium">
+                <span>✦</span> 行動端適配與智慧診斷版 <span>✦</span>
             </div>
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-wider text-[#f0e6d3]">
+                AI <span class="text-[#d4a574]">風水相術</span> 智慧分析
+            </h1>
+            <p class="text-neutral-400 text-xs sm:text-sm mt-1">即時環境氣場評估 · 支援本機與遠端 Vision LLM</p>
 
-            <div class="card">
-                <div class="card-title">◉ 環境鏡頭</div>
-                <div class="camera-box">
-                    <video id="videoElement" autoplay playsinline></video>
-                    <div class="cam-placeholder" id="camPlaceholder">
-                        <div class="icon">📷</div>
-                        <div>點擊下方開啟鏡頭</div>
-                    </div>
-                </div>
-                <div class="btn-row">
-                    <button class="btn btn-secondary" onclick="startCamera()">📷 開啟</button>
-                    <button class="btn btn-secondary" onclick="stopCamera()">⏹ 關閉</button>
-                    <button class="btn btn-success" onclick="analyzeFengShui()">🔮 分析</button>
+            <!-- 設備環境狀態條 -->
+            <div class="flex flex-wrap items-center justify-center gap-2 mt-3 text-xs">
+                <span id="envBadge" class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-neutral-300 flex items-center gap-1.5">
+                    📱 正在偵測環境...
+                </span>
+                <span id="protocolBadge" class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-neutral-300 flex items-center gap-1.5">
+                    🌐 協定偵測中...
+                </span>
+            </div>
+        </header>
+
+        <!-- 社群軟體內建瀏覽器警示橫幅 -->
+        <div id="inAppBrowserAlert" class="hidden mb-5 p-3.5 bg-amber-500/15 border border-amber-500/30 rounded-2xl text-amber-200 text-xs sm:text-sm leading-relaxed">
+            <div class="flex items-start gap-2.5">
+                <span class="text-lg">⚠️</span>
+                <div>
+                    <strong class="font-bold">偵測到您在通訊軟體內建瀏覽器（如 LINE / 微信 / FB）中開啟：</strong>
+                    <p class="mt-1 opacity-90">內建瀏覽器常會封鎖鏡頭權限及連線到電腦區網 IP。強烈建議點擊右上角「<strong>⋮</strong>」或「<strong>⋯</strong>」，選擇<strong>「在預設瀏覽器中開啟」</strong>（Safari 或 Chrome）。</p>
                 </div>
             </div>
         </div>
 
-        <div id="statusMessage"></div>
-        <div class="footer">AI Feng Shui Analyzer · LM-Studio 相容</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- 左欄：API 設定與診斷 -->
+            <section class="bg-white/[0.03] border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+                        <h2 class="text-[#d4a574] text-sm font-semibold tracking-wider flex items-center gap-2">
+                            <span>⚙</span> API 伺服器設定
+                        </h2>
+                        <button type="button" onclick="toggleHelpModal()" class="text-neutral-400 hover:text-neutral-200 text-xs px-2 py-1 rounded bg-white/5 border border-white/10 transition">
+                            ❓ 疑難排解說明
+                        </button>
+                    </div>
+
+                    <!-- API URL 輸入 -->
+                    <div class="mb-3.5">
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="apiUrl" class="text-neutral-300 text-xs font-medium">LM-Studio API URL</label>
+                            <span id="urlWarning" class="text-[11px] text-amber-400 hidden">⚠️ 偵測到潛在格式問題</span>
+                        </div>
+                        <input type="text" id="apiUrl" placeholder="http://192.168.x.x:1234/v1 或 Cloudflare 網址"
+                            class="w-full bg-white/5 border border-white/15 focus:border-[#d4a574] focus:ring-1 focus:ring-[#d4a574] rounded-xl px-3.5 py-2.5 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition"
+                            inputmode="url" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+                        <div id="urlHint" class="text-[11px] text-neutral-400 mt-1 leading-normal hidden"></div>
+                    </div>
+
+                    <!-- API KEY 輸入 -->
+                    <div class="mb-3.5">
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="apiKey" class="text-neutral-300 text-xs font-medium">
+                                API KEY <span class="text-neutral-500 font-normal">（本機預設常免填）</span>
+                            </label>
+                            <span id="keyCleanNotice" class="text-[11px] text-emerald-400 hidden">✓ 已智慧淨化格式</span>
+                        </div>
+                        <div class="relative">
+                            <input type="text" id="apiKey" placeholder="若 LM-Studio 未開啟認證可留空"
+                                class="key-secure w-full bg-white/5 border border-white/15 focus:border-[#d4a574] focus:ring-1 focus:ring-[#d4a574] rounded-xl px-3.5 py-2.5 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition"
+                                autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+                        </div>
+
+                        <!-- 輔助按鈕組 -->
+                        <div class="flex flex-wrap gap-2 mt-2 text-xs">
+                            <button type="button" id="toggleKeyBtn" onclick="toggleKeyVisibility()" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-neutral-300 transition">
+                                👁 顯示 Key
+                            </button>
+                            <button type="button" onclick="cleanKeyInput()" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-neutral-300 transition">
+                                🧹 清理隱形空格
+                            </button>
+                            <button type="button" onclick="clearKey()" class="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-300 transition">
+                                🗑 清空
+                            </button>
+                        </div>
+                        <div id="keyTipBox" class="text-[11px] text-amber-300/90 mt-1.5 hidden bg-amber-500/10 p-2 rounded-lg border border-amber-500/20"></div>
+                    </div>
+
+                    <!-- CORS Proxy 欄位 -->
+                    <div class="mb-4">
+                        <label for="proxyUrl" class="text-neutral-300 text-xs font-medium block mb-1">
+                            CORS 轉發代理 <span class="text-neutral-500 font-normal">（選填，僅在 HTTPS 網頁存取 HTTP API 時使用）</span>
+                        </label>
+                        <input type="text" id="proxyUrl" placeholder="例如：https://corsproxy.io/?"
+                            class="w-full bg-white/5 border border-white/15 focus:border-[#d4a574] rounded-xl px-3.5 py-2.5 text-xs text-neutral-100 placeholder-neutral-500 outline-none transition"
+                            autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+                    </div>
+                </div>
+
+                <!-- 操作與模型資訊 -->
+                <div>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <button type="button" onclick="testConnection()" class="w-full py-2.5 px-3 bg-gradient-to-r from-[#d4a574] to-[#b8864e] hover:brightness-110 active:scale-[0.98] text-[#0d0d1a] font-bold text-xs sm:text-sm rounded-xl transition shadow-lg shadow-amber-900/20">
+                            ⚡ 測試連接
+                        </button>
+                        <button type="button" onclick="runDiagnostics()" class="w-full py-2.5 px-3 bg-white/10 hover:bg-white/15 active:scale-[0.98] text-neutral-200 font-medium text-xs sm:text-sm rounded-xl border border-white/10 transition">
+                            🩺 連線健檢
+                        </button>
+                    </div>
+
+                    <!-- 成功連線模型徽章 -->
+                    <div id="modelBadge" class="hidden items-center justify-between p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-300 text-xs">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse-slow flex-shrink-0"></span>
+                            <span id="modelName" class="font-medium truncate">未載入模型</span>
+                        </div>
+                        <span id="modelCount" class="text-[11px] opacity-75 ml-2 flex-shrink-0"></span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 右欄：鏡頭與相片擷取 -->
+            <section class="bg-white/[0.03] border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+                        <h2 class="text-[#d4a574] text-sm font-semibold tracking-wider flex items-center gap-2">
+                            <span>◉</span> 環境視野拍攝
+                        </h2>
+                        <span id="cameraStatusText" class="text-neutral-400 text-xs">待命</span>
+                    </div>
+
+                    <!-- 預覽容器 -->
+                    <div class="relative w-full aspect-video sm:h-[220px] bg-black/60 rounded-xl overflow-hidden border border-white/10 flex items-center justify-center">
+                        <video id="videoElement" autoplay playsinline muted class="w-full h-full object-cover hidden"></video>
+                        <img id="imagePreview" alt="預覽影像" class="w-full h-full object-contain hidden" />
+
+                        <div id="cameraPlaceholder" class="flex flex-col items-center justify-center text-neutral-400 p-4 text-center">
+                            <span class="text-3xl sm:text-4xl mb-2 opacity-60">📷</span>
+                            <p class="text-xs sm:text-sm">支援「即時鏡頭」或「拍照/相簿上傳」</p>
+                            <p class="text-[11px] text-neutral-500 mt-1">在非 HTTPS 環境請使用拍照上傳</p>
+                        </div>
+                    </div>
+
+                    <!-- 隱藏原生相機/檔案選擇器 -->
+                    <input type="file" id="nativeCameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleNativeImage(event)">
+                    <input type="file" id="albumInput" accept="image/*" class="hidden" onchange="handleNativeImage(event)">
+                </div>
+
+                <!-- 控制按鈕組 -->
+                <div class="mt-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                        <button type="button" onclick="startLiveCamera()" class="py-2.5 px-2 bg-white/10 hover:bg-white/15 active:scale-[0.97] rounded-xl text-xs font-medium text-neutral-200 border border-white/10 transition text-center">
+                            📹 開啟即時鏡頭
+                        </button>
+                        <button type="button" onclick="triggerNativeCamera()" class="py-2.5 px-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200 active:scale-[0.97] rounded-xl text-xs font-medium border border-indigo-500/30 transition text-center">
+                            📸 原生相機拍照
+                        </button>
+                        <button type="button" onclick="triggerAlbumUpload()" class="py-2.5 px-2 bg-white/10 hover:bg-white/15 active:scale-[0.97] rounded-xl text-xs font-medium text-neutral-200 border border-white/10 transition text-center">
+                            🖼 相簿選取
+                        </button>
+                        <button type="button" onclick="stopLiveCamera()" class="py-2.5 px-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 active:scale-[0.97] rounded-xl text-xs font-medium border border-rose-500/20 transition text-center">
+                            ⏹ 關閉鏡頭
+                        </button>
+                    </div>
+
+                    <button type="button" onclick="analyzeFengShui()" id="analyzeBtn" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 active:scale-[0.98] text-white font-bold text-sm rounded-xl transition shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2">
+                        <span>🔮</span> 開始風水深度分析
+                    </button>
+                </div>
+            </section>
+        </div>
+
+        <!-- 狀態與分析反饋視窗 -->
+        <div id="statusBox" class="mt-5 hidden rounded-2xl p-4 sm:p-5 text-xs sm:text-sm leading-relaxed border transition-all duration-300"></div>
+
+        <!-- 說明與故障排查彈跳對話框 -->
+        <div id="helpModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-[#141424] border border-white/15 rounded-3xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-5 sm:p-6 text-neutral-200 text-xs sm:text-sm shadow-2xl">
+                <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+                    <h3 class="text-[#d4a574] font-bold text-base flex items-center gap-2">
+                        <span>📖</span> 為何電腦正常但手機連不上？
+                    </h3>
+                    <button type="button" onclick="toggleHelpModal()" class="text-neutral-400 hover:text-white text-lg p-1">✕</button>
+                </div>
+
+                <div class="space-y-4 leading-relaxed">
+                    <div class="p-3 bg-amber-500/10 border border-amber-500/25 rounded-xl">
+                        <strong class="text-amber-300 block mb-1">1. 手機輸入的隱形空格／全形問題（最常發生）：</strong>
+                        <p class="text-neutral-300">從 LINE、WeChat、備忘錄複製金鑰或網址時，經常夾帶「零寬空格（Zero-width space）」或全形符號。本版程式已自動為您清除這些隱形字元。</p>
+                    </div>
+
+                    <div class="p-3 bg-rose-500/10 border border-rose-500/25 rounded-xl">
+                        <strong class="text-rose-300 block mb-1">2. HTTPS 與 HTTP 混合內容封鎖（Mixed Content）：</strong>
+                        <p class="text-neutral-300">若網頁是透過 HTTPS 載入，手機瀏覽器會自動擋下對 `http://192.168.x.x` 的請求。最完美的解決方式是使用 Cloudflare 免費穿透：</p>
+                        <code class="block mt-2 p-2 bg-black/40 rounded border border-white/10 text-amber-200 font-mono text-[11px]">
+                            cloudflared tunnel --url http://localhost:1234
+                        </code>
+                        <p class="text-neutral-400 text-[11px] mt-1">產生 `https://xxx.trycloudflare.com` 後直接填入網址，手機電腦皆可安全連線。</p>
+                    </div>
+
+                    <div class="p-3 bg-indigo-500/10 border border-indigo-500/25 rounded-xl">
+                        <strong class="text-indigo-300 block mb-1">3. LM-Studio 必須允許區網連線：</strong>
+                        <p class="text-neutral-300">請在 LM-Studio 的「Developer / Local Server」分頁，勾選 <strong>Serve on Local Network (0.0.0.0)</strong> 與 <strong>Enable CORS</strong>，並確認電腦防火牆允許 1234 連接埠。</p>
+                    </div>
+
+                    <div class="p-3 bg-teal-500/10 border border-teal-500/25 rounded-xl">
+                        <strong class="text-teal-300 block mb-1">4. 手機上的 Localhost 迷思：</strong>
+                        <p class="text-neutral-300">手機上的 `localhost` 是指手機自己！手機必須填寫電腦在 Wi-Fi 中的區網 IP（例如 `http://192.168.1.100:1234`），且手機與電腦必須連接同一個 Wi-Fi。</p>
+                    </div>
+                </div>
+
+                <button type="button" onclick="toggleHelpModal()" class="mt-5 w-full py-2.5 bg-white/10 hover:bg-white/15 text-white font-medium rounded-xl border border-white/10 transition">
+                    我知道了
+                </button>
+            </div>
+        </div>
+
+        <footer class="mt-6 text-center text-neutral-500 text-[11px] tracking-wider">
+            AI Feng Shui Vision Engine · 已相容 OpenAI / LM-Studio Vision 協定
+        </footer>
     </div>
 
     <script>
-        let stream = null, models = [];
+        let liveStream = null;
+        let loadedModels = [];
+        let capturedBase64 = null;
 
-        function saveConfig(url, key, proxy) {
+        // 智慧淨化字串（清除零寬空格、全形空格、換行、BOM 與非標準 Dash）
+        function sanitizeString(str) {
+            if (!str) return '';
+            return str
+                .replace(/[\u200B-\u200D\uFEFF]/g, '') // 清除 Unicode 零寬空格與 BOM
+                .replace(/\u00A0/g, ' ')               // 將不換行空格轉為一般空格
+                .replace(/[\u2010-\u2015]/g, '-')     // 將全形破折號/連接號轉為標準 '-'
+                .replace(/[\r\n\t]/g, '')              // 清除換行符號
+                .trim();
+        }
+
+        // 智慧修復網址常見的手機鍵盤全形符號
+        function sanitizeUrl(rawUrl) {
+            if (!rawUrl) return '';
+            let cleaned = sanitizeString(rawUrl);
+            // 轉換中文全形標點符號
+            cleaned = cleaned
+                .replace(/：/g, ':')
+                .replace(/／/g, '/')
+                .replace(/。/g, '.')
+                .replace(/？/g, '?')
+                .replace(/＝/g, '=');
+
+            // 移除尾端多餘斜線
+            cleaned = cleaned.replace(/\/+$/, '');
+            return cleaned;
+        }
+
+        // 儲存與讀取設定
+        function saveSettings(url, key, proxy) {
             try {
                 localStorage.setItem('fengshui_apiUrl', url || '');
                 localStorage.setItem('fengshui_apiKey', key || '');
                 localStorage.setItem('fengshui_proxyUrl', proxy || '');
-            } catch(e) {}
+            } catch (e) {
+                console.warn('LocalStorage 無法寫入:', e);
+            }
         }
-        function loadConfig() {
+
+        function loadSettings() {
             try {
                 return {
                     url: localStorage.getItem('fengshui_apiUrl') || '',
                     key: localStorage.getItem('fengshui_apiKey') || '',
                     proxy: localStorage.getItem('fengshui_proxyUrl') || ''
                 };
-            } catch(e) { return {url:'', key:'', proxy:''}; }
+            } catch (e) {
+                return { url: '', key: '', proxy: '' };
+            }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            const badge = document.getElementById('protocolBadge');
-            if (location.protocol === 'https:') {
-                badge.textContent = '🔒 HTTPS · 建議搭配 cloudflared 免 Proxy 運行';
-                badge.className = 'badge warn';
-            } else if (location.protocol === 'file:') {
-                badge.textContent = '📁 本機檔案 · 可直接連線 LM-Studio';
-            } else {
-                badge.textContent = '🌐 ' + location.protocol.replace(':', '') + ' · 可直接連線 LM-Studio';
-            }
+            inspectEnvironment();
+            const config = loadSettings();
 
-            const cfg = loadConfig();
-            if (cfg.url) document.getElementById('apiUrl').value = cfg.url;
-            if (cfg.key) document.getElementById('apiKey').value = cfg.key;
-            if (cfg.proxy) document.getElementById('proxyUrl').value = cfg.proxy;
-            if (cfg.url) setTimeout(() => connectToLMStudio(), 500);
+            const urlInput = document.getElementById('apiUrl');
+            const keyInput = document.getElementById('apiKey');
+            const proxyInput = document.getElementById('proxyUrl');
 
-            if (cfg.key) {
-                showKeyNote('⚠️ 此欄位已自動填入 <strong>先前儲存的 Key</strong>（畫面為遮罩看不到內容）。' +
-                    '若手機之前存過舊的 Token，或瀏覽器密碼管理器自動帶入其他憑證，就會造成「電腦正常、手機 401」。' +
-                    '請點「👁 顯示 Key」核對，或直接「🗑 清除已存 Key」後重新輸入。', 'warn');
-            }
+            if (config.url) urlInput.value = config.url;
+            if (config.key) keyInput.value = config.key;
+            if (config.proxy) proxyInput.value = config.proxy;
 
-            document.getElementById('apiKey').addEventListener('input', () => {
-                const v = document.getElementById('apiKey').value;
-                const modified = (v.trim() !== (cfg.key || ''));
-                if (/^\s|\s$/.test(v)) {
-                    showKeyNote('⚠️ 偵測到 Key 前後有空格／換行（已用 · 標示）：<br><code>[' + htmlEscape(v.replace(/\s/g, '·')) + ']</code><br>送出前程式會自動去除前後空白，但仍建議清掉避免混淆。', 'warn');
-                } else if (modified) {
-                    hideKeyNote();
-                }
-            });
+            // 監聽網址輸入，即時警告 localhost 或混合內容
+            urlInput.addEventListener('input', validateUrlField);
+            keyInput.addEventListener('input', validateKeyField);
 
-            if (('ontouchstart' in window) || navigator.maxTouchPoints > 0) {
-                document.querySelectorAll('input').forEach(i => {
-                    i.addEventListener('focus', () => {
-                        setTimeout(() => { try { i.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch(e){} }, 400);
-                    });
-                });
+            validateUrlField();
+
+            // 若已有儲存的 URL，稍作延遲嘗試自動測試
+            if (config.url) {
+                setTimeout(() => {
+                    testConnection(false);
+                }, 400);
             }
         });
 
-        function toggleHelp() {
-            document.getElementById('helpBox').classList.toggle('show');
-        }
+        // 偵測執行環境（裝置、協定、In-App Browser）
+        function inspectEnvironment() {
+            const isHttps = location.protocol === 'https:';
+            const isFile = location.protocol === 'file:';
+            const userAgent = navigator.userAgent || '';
+            const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent);
+            const isInApp = /Line|FB_IAB|FB4A|FBAV|Instagram|MicroMessenger/i.test(userAgent);
 
-        function htmlEscape(s) {
-            return String(s == null ? '' : s)
-                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        }
-        function targetHostLabel(u) {
-            try {
-                const parsed = new URL(u);
-                return parsed.host + parsed.pathname;
-            } catch(e) {
-                return String(u || '');
+            // 環境 Badge
+            const envBadge = document.getElementById('envBadge');
+            envBadge.textContent = isMobile ? '📱 行動裝置環境' : '💻 電腦端環境';
+
+            // 協定 Badge
+            const protoBadge = document.getElementById('protocolBadge');
+            if (isHttps) {
+                protoBadge.innerHTML = '<span class="text-emerald-400">🔒 HTTPS 安全協定</span>';
+            } else if (isFile) {
+                protoBadge.innerHTML = '<span class="text-amber-300">📁 本機檔案 (file://)</span>';
+            } else {
+                protoBadge.innerHTML = '<span class="text-neutral-300">🌐 HTTP 協定</span>';
+            }
+
+            // 社群軟體內建瀏覽器警示
+            if (isInApp) {
+                document.getElementById('inAppBrowserAlert').classList.remove('hidden');
             }
         }
+
+        // 即時檢查網址欄位
+        function validateUrlField() {
+            const urlInput = document.getElementById('apiUrl');
+            const warnEl = document.getElementById('urlWarning');
+            const hintEl = document.getElementById('urlHint');
+            const val = urlInput.value.trim();
+
+            const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+            const isHttps = location.protocol === 'https:';
+
+            let warnText = '';
+
+            if (isMobile && (val.includes('localhost') || val.includes('127.0.0.1'))) {
+                warnText = '⚠️ 手機無法連線到本機的「localhost」。請改填寫您電腦在 Wi-Fi 中的區網 IP（如 <code>http://192.168.x.x:1234</code>）或 Cloudflare Tunnel 網址。';
+            } else if (isHttps && val.startsWith('http://') && !document.getElementById('proxyUrl').value.trim()) {
+                warnText = '⚠️ 混合內容警告：此頁面為 HTTPS，直接存取 HTTP 網址會被手機瀏覽器封鎖！建議使用 Cloudflare Tunnel 或填入 CORS Proxy。';
+            }
+
+            if (warnText) {
+                warnEl.classList.remove('hidden');
+                hintEl.innerHTML = warnText;
+                hintEl.classList.remove('hidden');
+            } else {
+                warnEl.classList.add('hidden');
+                hintEl.classList.add('hidden');
+            }
+        }
+
+        // 即時檢查 Key 欄位
+        function validateKeyField() {
+            const val = document.getElementById('apiKey').value;
+            const tipBox = document.getElementById('keyTipBox');
+            if (/[\u200B-\u200D\uFEFF]/.test(val)) {
+                tipBox.innerHTML = '⚠️ 偵測到您貼上的 Key 中包含隱形空格（Zero-width space），這正是手機 401/連線失敗的主要原因！點擊上方「🧹 清理隱形空格」可一鍵修復。';
+                tipBox.classList.remove('hidden');
+            } else {
+                tipBox.classList.add('hidden');
+            }
+        }
+
         function toggleKeyVisibility() {
-            const el = document.getElementById('apiKey');
-            const btn = document.getElementById('keyToggle');
-            const showing = el.classList.toggle('visible');
-            btn.textContent = showing ? '🙈 隱藏 Key' : '👁 顯示 Key';
-            el.focus();
+            const keyEl = document.getElementById('apiKey');
+            const btn = document.getElementById('toggleKeyBtn');
+            const isVisible = keyEl.classList.toggle('visible');
+            btn.textContent = isVisible ? '🙈 隱藏 Key' : '👁 顯示 Key';
         }
-        function clearStoredKey() {
-            const el = document.getElementById('apiKey');
-            el.value = '';
+
+        function cleanKeyInput() {
+            const keyEl = document.getElementById('apiKey');
+            const original = keyEl.value;
+            const cleaned = sanitizeString(original);
+            keyEl.value = cleaned;
+
+            const notice = document.getElementById('keyCleanNotice');
+            notice.classList.remove('hidden');
+            setTimeout(() => notice.classList.add('hidden'), 2500);
+
+            validateKeyField();
+            displayStatus('Key 字串已成功自動淨化，移除非標準字元與隱形空格。', 'info');
+        }
+
+        function clearKey() {
+            const keyEl = document.getElementById('apiKey');
+            keyEl.value = '';
+            validateKeyField();
             try { localStorage.setItem('fengshui_apiKey', ''); } catch(e) {}
-            hideKeyNote();
-            showKeyNote('✅ 已清除先前儲存的 Key。請現在重新貼上正確 Token 再按「測試連接」。');
-            el.focus();
-        }
-        function showKeyNote(msg, type) {
-            const n = document.getElementById('keyNote');
-            n.innerHTML = msg;
-            n.className = 'key-note' + (type === 'warn' ? ' warn' : '');
-            n.style.display = 'block';
-        }
-        function hideKeyNote() {
-            const n = document.getElementById('keyNote');
-            if (n) n.style.display = 'none';
+            displayStatus('已清空 API Key', 'info');
         }
 
-        function getRequestConfig(path) {
-            let url = document.getElementById('apiUrl').value.trim().replace(/\/+$/, '');
-            const proxy = document.getElementById('proxyUrl').value.trim().replace(/\/+$/, '');
-            const key = document.getElementById('apiKey').value.trim();
+        function toggleHelpModal() {
+            const modal = document.getElementById('helpModal');
+            modal.classList.toggle('hidden');
+        }
 
-            // 確保路徑處理正確，過濾掉 /v1 重複拼接的問題
-            if (!url.endsWith('/v1')) {
-                url = url + '/v1';
+        // 構建乾淨的 API 呼叫設定
+        function constructRequestConfig(endpointPath) {
+            let baseUrl = sanitizeUrl(document.getElementById('apiUrl').value);
+            const proxy = sanitizeUrl(document.getElementById('proxyUrl').value);
+            const rawKey = sanitizeString(document.getElementById('apiKey').value);
+
+            // 確保路徑以 /v1 結尾且避免重複拼接
+            if (!baseUrl.endsWith('/v1')) {
+                // 若使用者不小心貼了完整的 /models 或 /chat/completions 予以修正
+                baseUrl = baseUrl.replace(/\/models$/, '').replace(/\/chat\/completions$/, '');
+                if (!baseUrl.endsWith('/v1')) {
+                    baseUrl = baseUrl + '/v1';
+                }
             }
-            
-            const targetUrl = url + path;
 
-            let fetchUrl = targetUrl;
+            const targetUrl = baseUrl + endpointPath;
+            let finalUrl = targetUrl;
+
+            // 支援代理伺服器格式
             if (proxy) {
-                fetchUrl = proxy + '/' + encodeURIComponent(targetUrl);
-            }
-
-            const headers = { 'Content-Type': 'application/json' };
-            if (key) {
-                headers['Authorization'] = 'Bearer ' + key;
-            }
-
-            return { fetchUrl, headers };
-        }
-
-        async function connectToLMStudio(skipKey) {
-            const url = document.getElementById('apiUrl').value.trim();
-            const key = skipKey ? '' : document.getElementById('apiKey').value.trim();
-            const proxy = document.getElementById('proxyUrl').value.trim();
-            if (!url) { showMsg('請輸入 API URL', 'error'); return; }
-
-            showMsg(skipKey ? '正在以「不帶 Key」方式連線（可判斷 LM-Studio 是否已開啟認證）...' : '正在連線 ...', 'info');
-            try {
-                const { fetchUrl, headers } = getRequestConfig('/models');
-                const r = await fetch(fetchUrl, { headers, mode: 'cors' });
-
-                let body = '';
-                try { body = await r.text(); } catch(e) {}
-
-                if (r.status === 401) {
-                    const sentKey = document.getElementById('apiKey').value.trim();
-                    let hint = 'HTTP 401 認證失敗（LM-Studio 端拒絕此請求）。<br><br><strong>排查建議：</strong><br>';
-                    hint += '① 此欄位可能被自動填入「先前儲存」或「手機密碼管理器」的舊憑證。<br>' +
-                        '&nbsp;&nbsp;請先點「👁 顯示 Key」核對畫面內容是否與電腦端完全一致（含有無多餘空格／隱藏字元），再按「🗑 清除已存 Key」重新貼上。<br>';
-                    if (proxy) {
-                        hint += '② ⚠️ 您使用了 CORS Proxy，該 Proxy 可能在轉發時「刪除」Authorization Header，導致伺服器以為沒帶 Key。<br>' +
-                            '&nbsp;&nbsp;請改用 cloudflared 隧道（Proxy 欄位留空）再試。<br>';
-                    }
-                    hint += '<br><strong>本次實際送出的請求資訊：</strong><br>' +
-                        '・目標伺服器：<code>' + htmlEscape(targetHostLabel(fetchUrl)) + '</code><br>' +
-                        '・Authorization：<code>' + (sentKey ? '已帶上（Key 共 ' + sentKey.length + ' 字元，前 4 碼：' + htmlEscape(sentKey.slice(0, 4)) + '…，末 4 碼：…' + htmlEscape(sentKey.slice(-4)) + '）' : '未帶上！Key 欄位是空的') + '</code>';
-                    if (body) {
-                        hint += '<br>・LM-Studio 原始回應：<br><code>' + htmlEscape(body.slice(0, 250)) + '</code>';
-                    }
-                    throw new Error(hint);
-                }
-                if (r.status === 0 || r.type === 'opaque') {
-                    let hint = 'CORS／混合內容被封鎖。';
-                    if (location.protocol === 'https:' && url.startsWith('http:')) {
-                        hint += ' HTTPS 頁面無法直接連 HTTP 伺服器，請改用 cloudflared HTTPS URL。';
-                    }
-                    throw new Error(hint);
-                }
-                if (!r.ok) throw new Error('HTTP ' + r.status + '，回應：' + body.slice(0, 150));
-
-                let d;
-                try { d = JSON.parse(body); } catch(e) { throw new Error('伺服器回應非 JSON：' + body.slice(0, 150)); }
-
-                let list = [];
-                if (d.data && Array.isArray(d.data)) list = d.data;
-                else if (d.models && Array.isArray(d.models)) list = d.models;
-
-                if (!list.length) throw new Error(
-                    'LM-Studio 未載入任何模型。<br><br>' +
-                    '請在 LM-Studio 中：<br>' +
-                    '1. 確認已載入一個模型（點擊模型名稱旁的 ▶ 按鈕）<br>' +
-                    '2. 檢查視窗左下角是否顯示 <strong>Running</strong><br>' +
-                    '3. 若 API Keys 有設定，確認此 Key 在允許清單中<br>' +
-                    '4. 重新啟動 LM-Studio 後再試'
-                );
-
-                models = list.map(m => ({ id: m.id, name: m.name || m.id }));
-                saveConfig(url, key, proxy);
-
-                const badge = document.getElementById('modelBadge');
-                badge.classList.add('show');
-                document.getElementById('modelName').textContent = models[0].name;
-                document.getElementById('modelCount').textContent = '共 ' + models.length + ' 個';
-
-                showMsg('✅ 連線成功 · 已選用 <strong>' + models[0].name + '</strong>', 'success');
-            } catch (e) {
-                const msg = e.message;
-                if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('net::ERR') || msg.includes('Load failed')) {
-                    showMsg('❌ 連線失敗（瀏覽器無法送達請求）<br><br>' +
-                        '可能原因：<br>' +
-                        '1. cloudflared tunnel 未執行<br>' +
-                        '2. 瀏覽器 CORS 預檢被阻擋<br>' +
-                        '3. 請確認 LM-Studio → Settings → Network 有開啟 CORS<br>' +
-                        '4. 若使用 Proxy，請確認 Proxy 本身是否正常運作', 'error');
+                if (proxy.endsWith('?') || proxy.endsWith('=')) {
+                    finalUrl = proxy + encodeURIComponent(targetUrl);
                 } else {
-                    showMsg('❌ ' + msg, 'error');
+                    finalUrl = proxy + '/' + targetUrl;
                 }
             }
-        }
 
-        async function startCamera() {
-            try {
-                const v = { video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } };
-                stream = await navigator.mediaDevices.getUserMedia(v);
-                document.getElementById('videoElement').srcObject = stream;
-                document.getElementById('camPlaceholder').style.display = 'none';
-                showMsg('📷 鏡頭已開啟', 'success');
-            } catch (e) {
-                showMsg('⚠ 無法開啟鏡頭：' + e.message, 'error');
+            // 嚴格過濾 Header，避免傳入無效 ByteString 導致 iOS/Android 崩潰
+            const headers = { 'Content-Type': 'application/json' };
+            if (rawKey) {
+                // 確保只傳送 ASCII 範圍字元，阻絕隱形字元引發的 fetch 例外
+                const safeKey = rawKey.replace(/[^\x00-\x7F]/g, '');
+                headers['Authorization'] = `Bearer ${safeKey}`;
             }
+
+            return { finalUrl, targetUrl, headers, safeKey: rawKey };
         }
 
-        function stopCamera() {
-            if (stream) { stream.getTracks().forEach(t => t.stop()); document.getElementById('videoElement').srcObject = null; }
-            document.getElementById('camPlaceholder').style.display = 'flex';
-            showMsg('鏡頭已關閉', 'info');
-        }
-
-        async function captureFrame() {
-            const video = document.getElementById('videoElement');
-            if (!video.srcObject) throw new Error('請先開啟鏡頭');
-            const c = document.createElement('canvas');
-            c.width = video.videoWidth || 640;
-            c.height = video.videoHeight || 480;
-            c.getContext('2d').drawImage(video, 0, 0);
-            return c.toDataURL('image/jpeg', 0.85).split(',')[1];
-        }
-
-        async function analyzeFengShui() {
-            if (!models.length) { showMsg('請先點擊「測試連接」', 'error'); return; }
-
-            let base64;
-            try {
-                base64 = await captureFrame();
-            } catch(e) {
-                showMsg('⚠ ' + e.message, 'error');
+        // 測試連接 LM-Studio
+        async function testConnection(showToast = true) {
+            const rawUrl = document.getElementById('apiUrl').value.trim();
+            if (!rawUrl) {
+                displayStatus('請先輸入 API URL（例如 http://192.168.x.x:1234/v1）', 'error');
                 return;
             }
 
-            const modelId = models[0].id;
-            showMsg('🔮 正在請 <strong>' + models[0].name + '</strong> 分析環境風水 ...', 'info');
-
-            const prompt = `你是一位專業的風水大師。請分析這張照片中的居住環境風水，從以下幾點給出建議：
-1. 整體氣場與佈局
-2. 採光、通風、動線
-3. 需要改善的地方
-4. 具體改善建議
-
-請用繁體中文回答，簡潔扼要。`;
+            if (showToast) displayStatus('⏳ 正在連線至 API 伺服器取得模型清單...', 'info');
 
             try {
-                const body = JSON.stringify({
-                    model: modelId,
-                    messages: [{
-                        role: 'user',
-                        content: [
-                            { type: 'text', text: prompt },
-                            { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + base64 } }
-                        ]
-                    }],
-                    max_tokens: 1024,
-                    temperature: 0.7
-                });
-
-                const { fetchUrl, headers } = getRequestConfig('/chat/completions');
-
-                const r = await fetch(fetchUrl, {
-                    method: 'POST',
+                const { finalUrl, headers, safeKey } = constructRequestConfig('/models');
+                const response = await fetch(finalUrl, {
+                    method: 'GET',
                     headers: headers,
-                    body
+                    mode: 'cors'
                 });
 
-                let respBody = '';
-                try { respBody = await r.text(); } catch(e) {}
+                const rawBody = await response.text();
 
-                if (respBody.includes('does not support image') || respBody.includes('image input') || respBody.includes('image.png')) {
+                if (response.status === 401) {
                     throw new Error(
-                        '❌ 模型 <strong>' + models[0].name + '</strong> 不支援圖片分析。<br><br>' +
-                        '請在 LM-Studio 中載入 <strong>支援 Vision 的模型</strong>，例如：<br>' +
-                        '• <code>llava</code> 系列<br>' +
-                        '• <code>moondream</code><br>' +
-                        '• <code>qwen-vl</code> 系列<br>' +
-                        '• <code>gemma-3-vision</code><br><br>' +
-                        '載入後重新點擊「測試連接」再試。'
+                        `HTTP 401 認證失敗！伺服器拒絕存取。<br><br>` +
+                        `<strong>排查指引：</strong><br>` +
+                        `1. 若 LM-Studio 未開啟認證，請點擊「🗑 清空」API Key 再連線。<br>` +
+                        `2. 若使用了 CORS Proxy，部分免費 Proxy 會過濾掉 Authorization 授權標頭。<br>` +
+                        `3. 本次送出的 Key 長度為 ${safeKey ? safeKey.length : 0} 字元，請點擊「👁 顯示 Key」檢查是否正確。`
                     );
                 }
 
-                if (r.status === 401) {
-                    throw new Error('❌ HTTP 401 認證失敗。<br>請回上一欄點「👁 顯示 Key」核對是否為正確 Token，或按「🗑 清除已存 Key」重新貼上。若「測試連接」成功但這裡失敗，通常是 Key 在送出瞬間被手機密碼管理器換成別的憑證，請改用「清除已存 Key」後再輸入一次。');
+                if (!response.ok) {
+                    throw new Error(`伺服器回應 HTTP ${response.status}：${rawBody.slice(0, 160)}`);
                 }
 
-                if (!r.ok) {
-                    throw new Error('HTTP ' + r.status + '：' + respBody.slice(0, 200));
+                let parsed;
+                try {
+                    parsed = JSON.parse(rawBody);
+                } catch (err) {
+                    throw new Error(`伺服器未回傳合法 JSON：${rawBody.slice(0, 160)}`);
                 }
 
-                let d;
-                try { d = JSON.parse(respBody); } catch(e) { throw new Error('回覆非 JSON：' + respBody.slice(0, 150)); }
+                let list = [];
+                if (Array.isArray(parsed.data)) list = parsed.data;
+                else if (Array.isArray(parsed.models)) list = parsed.models;
 
-                const reply = d.choices?.[0]?.message?.content || '（無回覆）';
-                showMsg('🔮 分析結果：<br><br>' + reply.replace(/\n/g, '<br>'), 'success');
-
-            } catch(e) {
-                const msg = e.message;
-                if (msg.includes('Failed to fetch') || msg.includes('net::ERR')) {
-                    showMsg('❌ 無法連線至 LM-Studio，請確認網路連線或 Proxy/Tunnel 設定', 'error');
-                } else {
-                    showMsg(msg, 'error');
+                if (!list.length) {
+                    throw new Error('已成功連線至 LM-Studio，但尚未在軟體內載入（Load）任何模型！請至電腦點選載入模型。');
                 }
+
+                loadedModels = list.map(m => ({ id: m.id, name: m.name || m.id }));
+
+                // 儲存設定
+                saveSettings(
+                    document.getElementById('apiUrl').value.trim(),
+                    document.getElementById('apiKey').value.trim(),
+                    document.getElementById('proxyUrl').value.trim()
+                );
+
+                // 更新畫面模型徽章
+                const badge = document.getElementById('modelBadge');
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+                document.getElementById('modelName').textContent = loadedModels[0].name;
+                document.getElementById('modelCount').textContent = `共 ${loadedModels.length} 個模型可用`;
+
+                displayStatus(`✅ 連線成功！已就緒模型：<strong>${loadedModels[0].name}</strong>`, 'success');
+
+            } catch (err) {
+                handleNetworkError(err);
             }
         }
 
-        function showMsg(msg, type) {
-            const el = document.getElementById('statusMessage');
-            el.innerHTML = msg;
-            el.className = type;
-            el.style.display = 'block';
+        // 深入連線健康檢查（針對手機端設計）
+        async function runDiagnostics() {
+            displayStatus('🩺 正在執行全面連線檢測，請稍候...', 'info');
+            const urlVal = document.getElementById('apiUrl').value.trim();
+            if (!urlVal) {
+                displayStatus('請輸入 API URL 後再執行健檢。', 'error');
+                return;
+            }
+
+            const results = [];
+            const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+            const isHttps = location.protocol === 'https:';
+
+            // 檢驗 1: Localhost 檢查
+            if (isMobile && (urlVal.includes('localhost') || urlVal.includes('127.0.0.1'))) {
+                results.push('❌ <strong>Localhost 誤用</strong>：手機正嘗試連線自身，無法連到電腦。請改用電腦區網 IP。');
+            } else {
+                results.push('✅ 位址格式：未誤用手機端的 localhost。');
+            }
+
+            // 檢驗 2: 混合內容檢查
+            if (isHttps && urlVal.startsWith('http://') && !document.getElementById('proxyUrl').value.trim()) {
+                results.push('❌ <strong>Mixed Content</strong>：網頁在 HTTPS，目標在 HTTP，瀏覽器預設阻擋！');
+            } else {
+                results.push('✅ 協定安全：無 Mixed Content 立即阻擋風險。');
+            }
+
+            // 檢驗 3: 隱形字元檢查
+            const keyVal = document.getElementById('apiKey').value;
+            if (/[\u200B-\u200D\uFEFF]/.test(keyVal)) {
+                results.push('❌ <strong>Key 包含零寬字元</strong>：請點擊「🧹 清理隱形空格」。');
+            } else {
+                results.push('✅ Key 格式：無隱形非標準字元。');
+            }
+
+            // 檢驗 4: 嘗試以純淨免 Key 探測
+            try {
+                const { finalUrl } = constructRequestConfig('/models');
+                const probeRes = await fetch(finalUrl, { method: 'GET', mode: 'cors' });
+                results.push(`✅ 網路到達率：伺服器可連通（HTTP 狀態碼 ${probeRes.status}）`);
+                if (probeRes.status === 401) {
+                    results.push('⚠️ 提示：LM-Studio 要求身分驗證，請確認 Key 是否填妥。');
+                }
+            } catch (e) {
+                results.push(`❌ <strong>封包無法抵達</strong>：${e.message}（請檢查防火牆、Wi-Fi 或 LM-Studio 0.0.0.0 設定）`);
+            }
+
+            displayStatus(
+                '<strong>🩺 健檢結果報告：</strong><br><br>' + results.join('<br>'),
+                results.some(r => r.includes('❌')) ? 'error' : 'success'
+            );
+        }
+
+        // 開啟即時相機
+        async function startLiveCamera() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                displayStatus('⚠️ 您的瀏覽器環境不支援即時視訊串流（通常為非 HTTPS 或內建瀏覽器引起）。<br>請改點擊「<strong>📸 原生相機拍照</strong>」或「<strong>🖼 相簿選取</strong>」，一樣能完成風水分析！', 'error');
+                return;
+            }
+
+            try {
+                displayStatus('📷 正在啟動鏡頭...', 'info');
+                const constraints = {
+                    video: {
+                        facingMode: { ideal: 'environment' },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+                liveStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const videoEl = document.getElementById('videoElement');
+                videoEl.srcObject = liveStream;
+                videoEl.classList.remove('hidden');
+
+                document.getElementById('imagePreview').classList.add('hidden');
+                document.getElementById('cameraPlaceholder').classList.add('hidden');
+                document.getElementById('cameraStatusText').textContent = '即時鏡頭運行中';
+                displayStatus('📷 即時鏡頭已成功開啟！調整好視角後即可進行分析。', 'success');
+            } catch (err) {
+                displayStatus(`⚠️ 無法開啟即時鏡頭（${err.message}）。請改用「📸 原生相機拍照」。`, 'error');
+            }
+        }
+
+        // 停止即時鏡頭
+        function stopLiveCamera() {
+            if (liveStream) {
+                liveStream.getTracks().forEach(track => track.stop());
+                liveStream = null;
+            }
+            const videoEl = document.getElementById('videoElement');
+            videoEl.srcObject = null;
+            videoEl.classList.add('hidden');
+
+            if (!capturedBase64) {
+                document.getElementById('cameraPlaceholder').classList.remove('hidden');
+                document.getElementById('cameraStatusText').textContent = '待命';
+            }
+            displayStatus('鏡頭已關閉', 'info');
+        }
+
+        // 觸發原生相機拍照
+        function triggerNativeCamera() {
+            stopLiveCamera();
+            document.getElementById('nativeCameraInput').click();
+        }
+
+        // 觸發相簿選取
+        function triggerAlbumUpload() {
+            stopLiveCamera();
+            document.getElementById('albumInput').click();
+        }
+
+        // 處理原生檔案/拍照上傳
+        function handleNativeImage(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            displayStatus('🖼 正在讀取相片...', 'info');
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    // 自動壓縮照片，避免手機高畫質照片傳輸逾時
+                    const canvas = document.createElement('canvas');
+                    const maxDim = 1200;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height && width > maxDim) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    } else if (height > maxDim) {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    capturedBase64 = dataUrl.split(',')[1];
+
+                    // 顯示預覽
+                    const previewEl = document.getElementById('imagePreview');
+                    previewEl.src = dataUrl;
+                    previewEl.classList.remove('hidden');
+                    document.getElementById('videoElement').classList.add('hidden');
+                    document.getElementById('cameraPlaceholder').classList.add('hidden');
+                    document.getElementById('cameraStatusText').textContent = '已載入相片';
+
+                    displayStatus('✅ 相片已成功載入！點擊下方「🔮 開始風水深度分析」即可開始。', 'success');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 從即時視訊中截圖
+        function captureLiveFrame() {
+            const video = document.getElementById('videoElement');
+            if (!video.srcObject) return null;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+        }
+
+        // 執行風水分析
+        async function analyzeFengShui() {
+            if (!loadedModels.length) {
+                displayStatus('⚠️ 尚未連接至任何模型！請先點擊「⚡ 測試連接」。', 'error');
+                return;
+            }
+
+            let base64Image = capturedBase64;
+            if (!base64Image && liveStream) {
+                base64Image = captureLiveFrame();
+            }
+
+            if (!base64Image) {
+                displayStatus('⚠️ 請先「開啟鏡頭」或「拍照/上傳相片」以供風水分析！', 'error');
+                return;
+            }
+
+            const model = loadedModels[0];
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            analyzeBtn.disabled = true;
+            analyzeBtn.classList.add('opacity-60', 'cursor-not-allowed');
+
+            displayStatus(`🔮 正在傳送影像至 <strong>${model.name}</strong> 進行風水觀象分析，這可能需要數秒至數十秒...`, 'info');
+
+            const systemPrompt = `你是一位精通傳統東方風水學與現代環境心理學的大師。請根據使用者提供的室內或周遭環境照片，進行客觀、詳盡且實用的風水診斷：
+1. 【整體格局與氣場初探】：描述空間的明暗、動線與開闊感。
+2. 【理氣與吉凶指瑕】：指出是否有穿堂煞、橫樑壓頂、鏡子對床/門、光煞或雜亂滯氣之虞。
+3. 【採光與通風解析】：分析藏風聚氣與空氣流通狀態。
+4. 【具體化解與開運建議】：提供簡單好執行的改善方案（如植物擺設、屏風、燈光或色彩調節）。
+
+請使用正體中文回答，語氣溫和專業且條理分明。`;
+
+            try {
+                const payload = {
+                    model: model.id,
+                    messages: [
+                        {
+                            role: 'user',
+                            content: [
+                                { type: 'text', text: systemPrompt },
+                                {
+                                    type: 'image_url',
+                                    image_url: {
+                                        url: `data:image/jpeg;base64,${base64Image}`
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    max_tokens: 1200,
+                    temperature: 0.6
+                };
+
+                const { finalUrl, headers } = constructRequestConfig('/chat/completions');
+
+                const response = await fetch(finalUrl, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(payload)
+                });
+
+                const rawText = await response.text();
+
+                if (!response.ok) {
+                    if (rawText.includes('does not support') || rawText.includes('vision') || rawText.includes('image input')) {
+                        throw new Error(`❌ 模型 <strong>${model.name}</strong> 不支援視覺影像辨識！<br>請在電腦端 LM-Studio 中載入支援 Vision 的模型（如 Qwen2-VL、Llama-Vision 或 Moondream）。`);
+                    }
+                    if (response.status === 401) {
+                        throw new Error('❌ HTTP 401 授權失敗。請檢查您的 API Key 是否正確無誤。');
+                    }
+                    throw new Error(`HTTP ${response.status} 錯誤：${rawText.slice(0, 180)}`);
+                }
+
+                const json = JSON.parse(rawText);
+                const reply = json.choices?.[0]?.message?.content || '（AI 未回傳內容）';
+
+                // 格式化輸出
+                const formattedHtml = reply
+                    .replace(/\n\n/g, '<br><br>')
+                    .replace(/\n/g, '<br>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-[#d4a574]">$1</strong>');
+
+                displayStatus(`<strong>✦ 大師風水批示結果 ✦</strong><br><br>${formattedHtml}`, 'success');
+
+            } catch (err) {
+                handleNetworkError(err);
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+            }
+        }
+
+        // 統一錯誤分類提示
+        function handleNetworkError(err) {
+            const msg = err.message || '';
+            const isHttps = location.protocol === 'https:';
+
+            if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('net::ERR')) {
+                let diagnostic = `<strong>❌ 無法連線至伺服器（請求未送達）</strong><br><br>`;
+                diagnostic += `<strong>常見手機排查重點：</strong><br>`;
+                diagnostic += `1. <strong>確認區網 IP：</strong>請確認不是輸入 <code>localhost</code>，手機必須連線電腦的實際 IP（例如 <code>http://192.168.1.100:1234/v1</code>）。<br>`;
+                diagnostic += `2. <strong>確認同一個 Wi-Fi：</strong>手機不能用 4G/5G 行動網路，必須與電腦在同一個無線網域，且沒有開啟訪客隔離（AP Isolation）。<br>`;
+                diagnostic += `3. <strong>LM-Studio 監聽位址：</strong>電腦端 LM-Studio 需勾選 <code>Serve on Local Network (0.0.0.0)</code>。<br>`;
+                if (isHttps) {
+                    diagnostic += `4. <strong>Mixed Content 封鎖：</strong>此頁面在 HTTPS，直接連線 HTTP 電腦會被擋。建議使用免費 <code>cloudflared</code> 穿透產生 HTTPS 網址。`;
+                }
+                displayStatus(diagnostic, 'error');
+            } else {
+                displayStatus(`<strong>❌ 發生錯誤：</strong><br>${msg}`, 'error');
+            }
+        }
+
+        // 渲染狀態卡片
+        function displayStatus(htmlContent, type) {
+            const box = document.getElementById('statusBox');
+            box.innerHTML = htmlContent;
+            box.classList.remove('hidden', 'bg-emerald-500/10', 'border-emerald-500/30', 'text-emerald-200',
+                               'bg-rose-500/10', 'border-rose-500/30', 'text-rose-200',
+                               'bg-amber-500/10', 'border-amber-500/30', 'text-amber-200');
+
+            if (type === 'success') {
+                box.classList.add('bg-emerald-500/10', 'border-emerald-500/30', 'text-emerald-200');
+            } else if (type === 'error') {
+                box.classList.add('bg-rose-500/10', 'border-rose-500/30', 'text-rose-200');
+            } else {
+                box.classList.add('bg-amber-500/10', 'border-amber-500/30', 'text-amber-200');
+            }
+            box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     </script>
 </body>
