@@ -256,13 +256,33 @@
 
         <!-- 手機一鍵同步 QR Code 對話框 -->
         <div id="syncModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-            <div class="bg-[#141424] border border-white/15 rounded-3xl max-w-md w-full p-5 sm:p-6 text-neutral-200 text-xs sm:text-sm shadow-2xl">
-                <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+            <div class="bg-[#141424] border border-white/15 rounded-3xl max-w-md w-full p-5 sm:p-6 text-neutral-200 text-xs sm:text-sm shadow-2xl flex flex-col items-center">
+                <div class="w-full flex items-center justify-between border-b border-white/10 pb-3 mb-4">
                     <h3 class="text-[#d4a574] font-bold text-base flex items-center gap-2">
                         <span>📲</span> 手機一鍵免複製同步
                     </h3>
                     <button type="button" onclick="closeSyncModal()" class="text-neutral-400 hover:text-white text-lg p-1">✕</button>
                 </div>
+
+                <p class="text-neutral-300 text-xs mb-3 text-center leading-relaxed">
+                    請使用手機相機或點擊本頁的「<strong>📷 掃描 QR Code</strong>」對準下方條碼：
+                </p>
+
+                <!-- 穩定的 QR Code 呈現容器 -->
+                <div class="bg-white p-3 rounded-2xl shadow-lg mb-3 flex items-center justify-center min-w-[216px] min-h-[216px]">
+                    <div id="qrcodeCanvas" class="flex items-center justify-center"></div>
+                </div>
+
+                <div class="w-full space-y-2 mt-2">
+                    <button type="button" id="copySyncBtn" onclick="copySyncUrl()" class="w-full py-2.5 px-3 bg-gradient-to-r from-[#d4a574] to-[#b8864e] hover:brightness-110 active:scale-[0.98] text-[#0d0d1a] font-bold text-xs sm:text-sm rounded-xl transition shadow-md flex items-center justify-center gap-1.5">
+                        📋 複製一鍵開啟連結（直接傳到 LINE）
+                    </button>
+                    <button type="button" onclick="closeSyncModal()" class="w-full py-2 bg-white/10 hover:bg-white/15 text-neutral-300 text-xs rounded-xl transition">
+                        關閉視窗
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- 專用 QR Code 掃描器對話框 -->
         <div id="qrScannerModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
@@ -616,20 +636,34 @@
 
             const syncUrl = generateSyncUrl();
             const qrContainer = document.getElementById('qrcodeCanvas');
+            if (!qrContainer) return;
             qrContainer.innerHTML = '';
 
             try {
-                new QRCode(qrContainer, {
-                    text: syncUrl,
-                    width: 200,
-                    height: 200,
-                    colorDark : "#000000",
-                    colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.M
-                });
+                if (typeof QRCode !== 'undefined') {
+                    new QRCode(qrContainer, {
+                        text: syncUrl,
+                        width: 190,
+                        height: 190,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.L // 採用 L 等級避免長 Token 發生溢位錯誤
+                    });
+                } else {
+                    throw new Error('QRCode 庫尚未就緒');
+                }
             } catch (e) {
-                console.warn('QRCode 模組渲染失敗:', e);
-                qrContainer.innerHTML = '<span class="text-xs text-neutral-500">QR Code 模組載入中...</span>';
+                console.warn('本地 QRCode 渲染異常，啟用備援圖源引擎:', e);
+                // 雲端即時渲染備援機制，保證 100% 產出 QR Code
+                const qrImg = document.createElement('img');
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=190x190&data=${encodeURIComponent(syncUrl)}`;
+                qrImg.alt = 'QR Code';
+                qrImg.className = 'w-[190px] h-[190px] rounded-lg';
+                qrImg.onerror = function() {
+                    this.onerror = null;
+                    this.src = `https://quickchart.io/qr?text=${encodeURIComponent(syncUrl)}&size=190`;
+                };
+                qrContainer.appendChild(qrImg);
             }
 
             document.getElementById('syncModal').classList.remove('hidden');
