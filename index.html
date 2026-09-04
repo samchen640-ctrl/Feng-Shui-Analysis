@@ -110,6 +110,8 @@
         .btn-outline.danger { border-color: rgba(180,80,80,0.35); color: #e8a0a0; }
 
         .key-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+        .key-secure { -webkit-text-security: disc; }
+        .key-secure.visible { -webkit-text-security: none; }
         .key-note {
             margin-top: 8px; font-size: 11px; line-height: 1.6;
             color: rgba(212,165,116,0.75); word-break: break-word;
@@ -218,9 +220,10 @@
                 </div>
                 <div class="form-group">
                     <label>API KEY <span class="optional">（選填）</span></label>
-                    <input type="password" id="apiKey" placeholder="sk-..." autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false">
+                    <input type="text" id="apiKey" class="key-secure" placeholder="sk-..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
                     <div class="key-row">
                         <button type="button" class="btn-outline" id="keyToggle" onclick="toggleKeyVisibility()">👁 顯示 Key</button>
+                        <button type="button" class="btn-outline" onclick="connectToLMStudio(true)">🔓 免 Key 測試</button>
                         <button type="button" class="btn-outline danger" onclick="clearStoredKey()">🗑 清除已存 Key</button>
                     </div>
                     <div class="key-note" id="keyNote" style="display:none;"></div>
@@ -353,9 +356,8 @@
         function toggleKeyVisibility() {
             const el = document.getElementById('apiKey');
             const btn = document.getElementById('keyToggle');
-            const showing = el.type !== 'password';
-            el.type = showing ? 'password' : 'text';
-            btn.textContent = showing ? '👁 顯示 Key' : '🙈 隱藏 Key';
+            const showing = el.classList.toggle('visible');
+            btn.textContent = showing ? '🙈 隱藏 Key' : '👁 顯示 Key';
             el.focus();
         }
         function clearStoredKey() {
@@ -402,13 +404,13 @@
             return { fetchUrl, headers };
         }
 
-        async function connectToLMStudio() {
+        async function connectToLMStudio(skipKey) {
             const url = document.getElementById('apiUrl').value.trim();
-            const key = document.getElementById('apiKey').value.trim();
+            const key = skipKey ? '' : document.getElementById('apiKey').value.trim();
             const proxy = document.getElementById('proxyUrl').value.trim();
             if (!url) { showMsg('請輸入 API URL', 'error'); return; }
 
-            showMsg('正在連線 ...', 'info');
+            showMsg(skipKey ? '正在以「不帶 Key」方式連線（可判斷 LM-Studio 是否已開啟認證）...' : '正在連線 ...', 'info');
             try {
                 const { fetchUrl, headers } = getRequestConfig('/models');
                 const r = await fetch(fetchUrl, { headers, mode: 'cors' });
