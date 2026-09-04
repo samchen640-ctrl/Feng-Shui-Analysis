@@ -10,6 +10,8 @@
     <title>AI 風水分析 - 行動端增強版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- 引入高靈敏度前端 QR Code 解碼庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -177,10 +179,13 @@
                         </button>
                     </div>
 
-                    <!-- 手機同步一鍵連結按鈕 -->
-                    <div class="mb-3">
+                    <!-- 手機同步與掃描按鈕組 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                        <button type="button" onclick="openQRScannerModal()" class="w-full py-2 px-3 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/35 font-medium text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
+                            <span>📷</span> 掃描 QR Code 帶入設定
+                        </button>
                         <button type="button" onclick="openSyncModal()" class="w-full py-2 px-3 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-200 border border-indigo-500/30 font-medium text-xs rounded-xl transition flex items-center justify-center gap-1.5">
-                            <span>📲</span> 產生手機「一鍵開啟」連結與 QR Code
+                            <span>📲</span> 產生一鍵連結/QR
                         </button>
                     </div>
 
@@ -259,21 +264,44 @@
                     <button type="button" onclick="closeSyncModal()" class="text-neutral-400 hover:text-white text-lg p-1">✕</button>
                 </div>
 
-                <p class="text-neutral-300 text-xs mb-3 leading-relaxed">
-                    在電腦輸入好 API URL 與 Key 後，直接用手機相機掃描下方 QR Code，或點擊複製連結傳到 LINE，手機點開即<strong>自動填入且絕不截斷</strong>！
-                </p>
-
-                <div class="flex flex-col items-center justify-center p-4 bg-white rounded-2xl mb-4 shadow-inner">
-                    <div id="qrcodeCanvas"></div>
-                    <span class="text-neutral-700 text-[11px] mt-2 font-medium">手機相機對準直接開啟</span>
+        <!-- 專用 QR Code 掃描器對話框 -->
+        <div id="qrScannerModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-[#141424] border border-white/15 rounded-3xl max-w-sm w-full p-5 text-neutral-200 text-xs shadow-2xl flex flex-col items-center">
+                <div class="w-full flex items-center justify-between border-b border-white/10 pb-3 mb-3">
+                    <h3 class="text-[#d4a574] font-bold text-sm flex items-center gap-2">
+                        <span>📷</span> 鏡頭對準電腦上的 QR Code
+                    </h3>
+                    <button type="button" onclick="closeQRScannerModal()" class="text-neutral-400 hover:text-white text-lg p-1">✕</button>
                 </div>
 
-                <div class="space-y-2">
-                    <button type="button" onclick="copySyncUrl()" id="copySyncBtn" class="w-full py-2.5 bg-gradient-to-r from-[#d4a574] to-[#b8864e] text-[#0d0d1a] font-bold rounded-xl transition hover:brightness-110 active:scale-[0.98]">
-                        📋 複製一鍵開啟連結（直接傳到 LINE）
+                <p class="text-neutral-400 text-[11px] mb-3 text-center">
+                    請將相機對準電腦螢幕上顯示的 QR Code，辨識成功後將自動載入！
+                </p>
+
+                <!-- 掃描相機視窗 -->
+                <div class="relative w-full aspect-square bg-black/80 rounded-2xl overflow-hidden border-2 border-emerald-500/40 flex items-center justify-center mb-3">
+                    <video id="qrScannerVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                    <canvas id="qrScannerCanvas" class="hidden"></canvas>
+                    
+                    <!-- 掃描準心動畫框 -->
+                    <div class="absolute inset-8 border-2 border-dashed border-emerald-400/70 rounded-xl pointer-events-none flex items-center justify-center">
+                        <div class="w-full h-0.5 bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse"></div>
+                    </div>
+                </div>
+
+                <div id="qrScanStatus" class="text-[12px] text-neutral-300 font-medium mb-3 text-center">
+                    🔍 正在啟動掃描鏡頭...
+                </div>
+
+                <div class="w-full space-y-2">
+                    <!-- 亦支援上傳/拍照 QR Code 圖檔備援 -->
+                    <button type="button" onclick="document.getElementById('qrFileInput').click()" class="w-full py-2 bg-white/10 hover:bg-white/15 text-neutral-200 font-medium rounded-xl transition text-center flex items-center justify-center gap-1.5">
+                        <span>📁</span> 從相簿選取或拍照辨識
                     </button>
-                    <button type="button" onclick="closeSyncModal()" class="w-full py-2 bg-white/10 hover:bg-white/15 text-white rounded-xl transition">
-                        關閉
+                    <input type="file" id="qrFileInput" accept="image/*" class="hidden" onchange="handleQRFileSelect(event)">
+
+                    <button type="button" onclick="closeQRScannerModal()" class="w-full py-2 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded-xl transition">
+                        取消關閉
                     </button>
                 </div>
             </div>
@@ -331,6 +359,8 @@
         let loadedModels = [];
         let capturedBase64 = null;
         let qrCodeInstance = null;
+        let qrScannerStream = null;
+        let qrScanAnimFrame = null;
 
         // 智慧淨化字串（清除零寬空格、全形空格、換行、BOM 與非標準 Dash）
         function sanitizeString(str) {
@@ -608,6 +638,166 @@
         function closeSyncModal() {
             document.getElementById('syncModal').classList.add('hidden');
         }
+
+        // ==================== 專用 QR Code 掃描器邏輯 ====================
+        async function openQRScannerModal() {
+            // 暫停風水鏡頭避免衝突
+            stopLiveCamera();
+
+            const modal = document.getElementById('qrScannerModal');
+            const statusEl = document.getElementById('qrScanStatus');
+            modal.classList.remove('hidden');
+            statusEl.textContent = '🔍 正在啟動後置掃描鏡頭...';
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                statusEl.innerHTML = '⚠️ 瀏覽器限制無法直接開啟即時掃描鏡頭。<br>請點下方「從相簿選取或拍照辨識」！';
+                return;
+            }
+
+            try {
+                qrScannerStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+                });
+                const videoEl = document.getElementById('qrScannerVideo');
+                videoEl.srcObject = qrScannerStream;
+                videoEl.setAttribute('playsinline', 'true');
+                await videoEl.play();
+                statusEl.textContent = '🎯 請將鏡頭對準電腦上的 QR Code...';
+                
+                requestAnimationFrame(scanQRCodeTick);
+            } catch (err) {
+                console.error('QR 鏡頭啟動失敗:', err);
+                statusEl.innerHTML = `⚠️ 無法存取鏡頭（${err.message}）<br>請點下方「從相簿選取或拍照辨識」`;
+            }
+        }
+
+        function closeQRScannerModal() {
+            if (qrScanAnimFrame) {
+                cancelAnimationFrame(qrScanAnimFrame);
+                qrScanAnimFrame = null;
+            }
+            if (qrScannerStream) {
+                qrScannerStream.getTracks().forEach(t => t.stop());
+                qrScannerStream = null;
+            }
+            const videoEl = document.getElementById('qrScannerVideo');
+            videoEl.srcObject = null;
+            document.getElementById('qrScannerModal').classList.add('hidden');
+        }
+
+        function scanQRCodeTick() {
+            const video = document.getElementById('qrScannerVideo');
+            const canvas = document.getElementById('qrScannerCanvas');
+            const statusEl = document.getElementById('qrScanStatus');
+
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+                // 使用 jsQR 進行即時解碼
+                if (window.jsQR) {
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: 'dontInvert',
+                    });
+
+                    if (code && code.data) {
+                        try {
+                            if (navigator.vibrate) navigator.vibrate(100);
+                        } catch(e) {}
+
+                        statusEl.innerHTML = '✨ 成功讀取 QR Code！正在填入...';
+                        closeQRScannerModal();
+                        applyDecodedConfig(code.data);
+                        return;
+                    }
+                }
+            }
+            qrScanAnimFrame = requestAnimationFrame(scanQRCodeTick);
+        }
+
+        // 從檔案或拍照辨識 QR Code
+        function handleQRFileSelect(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            const statusEl = document.getElementById('qrScanStatus');
+            statusEl.textContent = '⌛ 正在解析相片中的 QR Code...';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.getElementById('qrScannerCanvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, img.width, img.height);
+                    const imageData = ctx.getImageData(0, 0, img.width, img.height);
+
+                    if (window.jsQR) {
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
+                        if (code && code.data) {
+                            closeQRScannerModal();
+                            applyDecodedConfig(code.data);
+                        } else {
+                            statusEl.innerHTML = '❌ 未能在相片中辨識出 QR Code，請嘗試拍得更靠近或清晰一點。';
+                        }
+                    } else {
+                        statusEl.innerHTML = '⚠️ QR Code 解碼模組載入中，請稍候再試。';
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 將解析出的 URL/文字套用至輸入框
+        function applyDecodedConfig(decodedText) {
+            try {
+                let parsedUrl = null;
+                let targetUrl = '';
+                let targetKey = '';
+                let targetModel = '';
+
+                if (decodedText.startsWith('http://') || decodedText.startsWith('https://')) {
+                    parsedUrl = new URL(decodedText);
+                    const params = new URLSearchParams(parsedUrl.search || parsedUrl.hash.replace(/^#/, ''));
+                    targetUrl = params.get('url') || params.get('apiUrl') || '';
+                    targetKey = params.get('key') || params.get('apiKey') || '';
+                    targetModel = params.get('model') || '';
+                }
+
+                // 若非標準參數網址，而是直接填寫的字串
+                if (!targetUrl && (decodedText.includes('/v1') || decodedText.includes('http'))) {
+                    targetUrl = decodedText;
+                }
+
+                if (targetUrl) document.getElementById('apiUrl').value = decodeURIComponent(targetUrl);
+                if (targetKey) document.getElementById('apiKey').value = decodeURIComponent(targetKey);
+                if (targetModel) document.getElementById('customModelId').value = decodeURIComponent(targetModel);
+
+                validateUrlField();
+                validateKeyField();
+
+                saveSettings(
+                    document.getElementById('apiUrl').value,
+                    document.getElementById('apiKey').value,
+                    document.getElementById('proxyUrl').value,
+                    document.getElementById('customModelId').value
+                );
+
+                displayStatus('🎉 <strong>成功透過 QR Code 掃描匯入設定！</strong> 完整的 URL 與 Key 已全部自動填入，正在自動測試連線...', 'success');
+                setTimeout(() => { testConnection(true); }, 500);
+
+            } catch (err) {
+                console.error('套用 QR Code 設定失敗:', err);
+                displayStatus(`⚠️ QR Code 內容解析異常：${err.message}`, 'error');
+            }
+        }
+        // ==============================================================
 
         function copySyncUrl() {
             const syncUrl = generateSyncUrl();
