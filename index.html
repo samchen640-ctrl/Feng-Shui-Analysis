@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0d0d1a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>AI 風水分析</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(160deg, #0d0d1a 0%, #1a1a2e 40%, #0f3460 100%);
+            min-height: 100vh; min-height: 100dvh;
+            display: flex; justify-content: center; align-items: flex-start;
+            padding: 24px 16px 16px;
+            padding-top: max(24px, env(safe-area-inset-top));
+            padding-right: max(16px, env(safe-area-inset-right));
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
+            padding-left: max(16px, env(safe-area-inset-left));
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 800px; width: 100%;
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border-radius: 20px; padding: 28px 24px;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+        .header { text-align: center; margin-bottom: 28px; }
+        .header h1 {
+            color: #f0e6d3; font-size: 28px; font-weight: 700;
+            letter-spacing: 3px;
+        }
+        .header h1 span { color: #d4a574; }
+        .header p { color: rgba(240,230,211,0.45); font-size: 13px; margin-top: 4px; letter-spacing: 1px; }
+        .header .badge {
+            display: inline-block; margin-top: 6px;
+            padding: 3px 12px; border-radius: 10px;
+            font-size: 10px; letter-spacing: 1px;
+            background: rgba(90,143,123,0.15); color: #8fc0ae;
+            border: 1px solid rgba(90,143,123,0.2);
+        }
+        .header .badge.warn { background: rgba(212,165,116,0.12); color: #d4a574; border-color: rgba(212,165,116,0.2); }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px; padding: 20px;
+            border: 1px solid rgba(255,255,255,0.06);
+            margin-bottom: 16px;
+        }
+        .card-title {
+            color: #d4a574; font-size: 14px; font-weight: 600;
+            letter-spacing: 1.5px; margin-bottom: 16px;
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        }
+        .card-title .info-btn {
+            font-size: 11px; color: rgba(240,230,211,0.35); cursor: pointer;
+            background: none; border: none; padding: 4px;
+        }
+
+        .form-group { margin-bottom: 14px; }
+        .form-group label {
+            display: flex; align-items: center; gap: 6px;
+            color: rgba(240,230,211,0.6);
+            font-size: 12px; font-weight: 500; letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .form-group label .optional { color: rgba(240,230,211,0.25); font-weight: 400; }
+        .form-group input {
+            width: 100%; padding: 12px 14px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; color: #f0e6d3;
+            font-size: 16px; outline: none;
+            transition: border 0.3s;
+        }
+        .form-group input:focus { border-color: #d4a574; }
+        .form-group input::placeholder { color: rgba(240,230,211,0.25); }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 12px 20px; border: none; border-radius: 10px;
+            font-size: 14px; font-weight: 600; letter-spacing: 0.5px;
+            cursor: pointer; transition: all 0.25s;
+            color: #f0e6d3; min-height: 44px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: linear-gradient(135deg, #d4a574, #b8864e); width: 100%; }
+        .btn-primary:active { box-shadow: 0 4px 15px rgba(212,165,116,0.3); }
+        .btn-secondary { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); flex: 1 1 0; }
+        .btn-secondary:active { background: rgba(255,255,255,0.15); }
+        .btn-success { background: linear-gradient(135deg, #5a8f7b, #3d7a63); flex: 1 1 0; }
+        .btn-success:active { box-shadow: 0 4px 15px rgba(90,143,123,0.3); }
+        .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+        .btn-row .btn { min-width: 0; }
+        .btn-sm { padding: 8px 14px; font-size: 12px; min-height: 36px; }
+        .btn-outline {
+            background: transparent; border: 1px solid rgba(212,165,116,0.3);
+            color: #d4a574; padding: 6px 14px; font-size: 11px; border-radius: 8px; cursor: pointer;
+        }
+
+        .camera-box {
+            width: 100%; height: 220px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 12px; overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .camera-box video { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .cam-placeholder {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            color: rgba(240,230,211,0.25);
+            font-size: 13px; pointer-events: none;
+        }
+        .cam-placeholder .icon { font-size: 40px; margin-bottom: 8px; opacity: 0.5; }
+
+        .model-badge {
+            display: none; align-items: center; justify-content: space-between;
+            margin-top: 14px; padding: 8px 16px;
+            background: rgba(212,165,116,0.1);
+            border: 1px solid rgba(212,165,116,0.2);
+            border-radius: 20px; color: #d4a574; font-size: 13px; gap: 8px;
+        }
+        .model-badge.show { display: flex; }
+        .model-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: #5a8f7b; animation: pulse 2s infinite; flex-shrink: 0; }
+        .model-badge .model-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        #statusMessage {
+            margin-top: 16px; padding: 14px 18px;
+            border-radius: 12px; font-size: 14px; line-height: 1.6;
+            display: none; word-break: break-word;
+            animation: fadeSlide 0.35s ease;
+        }
+        #statusMessage.success { background: rgba(90,143,123,0.2); border: 1px solid rgba(90,143,123,0.3); color: #b5d9cb; }
+        #statusMessage.error { background: rgba(180,80,80,0.2); border: 1px solid rgba(180,80,80,0.3); color: #e8a0a0; }
+        #statusMessage.info { background: rgba(212,165,116,0.12); border: 1px solid rgba(212,165,116,0.2); color: #e8d5b8; }
+
+        .help-box {
+            margin-top: 12px; padding: 12px 14px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);
+            font-size: 12px; color: rgba(240,230,211,0.4); line-height: 1.7;
+            display: none;
+        }
+        .help-box.show { display: block; }
+        .help-box code {
+            background: rgba(255,255,255,0.06); padding: 1px 6px;
+            border-radius: 4px; font-size: 11px; color: #d4a574;
+        }
+
+        .footer { text-align: center; margin-top: 20px; color: rgba(240,230,211,0.18); font-size: 11px; letter-spacing: 1px; }
+
+        @keyframes fadeSlide { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        @media (max-width: 480px) {
+            body { padding: 16px 10px 10px; }
+            body { padding-top: max(16px, env(safe-area-inset-top)); padding-right: max(10px, env(safe-area-inset-right)); padding-bottom: max(10px, env(safe-area-inset-bottom)); padding-left: max(10px, env(safe-area-inset-left)); }
+            .container { padding: 20px 16px; border-radius: 16px; }
+            .header h1 { font-size: 24px; }
+            .camera-box { height: 190px; }
+            .btn { font-size: 13px; padding: 11px 14px; }
+            .help-box { font-size: 11px; }
+        }
+        @media (max-width: 360px) {
+            .btn-row { flex-direction: column; }
+            .btn-row .btn { flex: 1 1 auto; width: 100%; }
+            .camera-box { height: 160px; }
+        }
+        @media (max-width: 767px) and (orientation: landscape) and (max-height: 500px) {
+            body { padding-top: max(8px, env(safe-area-inset-top)); }
+            .container { padding-top: 14px; }
+            .camera-box { height: 110px; }
+            .header { margin-bottom: 12px; }
+        }
+        @media (min-width: 768px) {
+            .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+            body { align-items: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✦ <span>風水</span> 分析</h1>
+            <p>AI 環境風水智能分析系統</p>
+            <div class="badge" id="protocolBadge">🌐 偵測協定中...</div>
+        </div>
+
+        <div class="two-col">
+            <div class="card">
+                <div class="card-title">
+                    ⚙ API 設定
+                    <button class="info-btn" onclick="toggleHelp()" title="說明">?</button>
+                </div>
+                <div class="form-group">
+                    <label>LM-STUDIO API URL</label>
+                    <input type="text" id="apiUrl" placeholder="http://192.168.x.x:1234/v1" inputmode="url" autocomplete="url" autocapitalize="off" autocorrect="off" spellcheck="false">
+                </div>
+                <div class="form-group">
+                    <label>API KEY <span class="optional">（選填）</span></label>
+                    <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>
+                        CORS Proxy <span class="optional">（選填，HTTPS→HTTP 用）</span>
+                    </label>
+                    <input type="text" id="proxyUrl" placeholder="留空 = 直接連接" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false">
+                </div>
+                <button class="btn btn-primary" onclick="connectToLMStudio()">⟳ 測試連接</button>
+                <div class="model-badge" id="modelBadge">
+                    <span class="dot"></span>
+                    <span class="model-name" id="modelName">未連接</span>
+                    <span id="modelCount" style="font-size:11px;opacity:0.6"></span>
+                </div>
+
+                <div class="help-box" id="helpBox">
+                    <strong style="color:#d4a574;">連線方式與 401 故障排查：</strong><br>
+                    • <strong>為什麼手機會出現 401？</strong><br>
+                    &nbsp;&nbsp;1. <strong>CORS Proxy 剝除 Header</strong>：許多免費 Proxy 會拔掉 <code>Authorization</code>。建議使用無驗證的 cloudflared 穿透，或使用允許傳遞 Header 的自建 Proxy。<br>
+                    &nbsp;&nbsp;2. <strong>LM-Studio Token 設定</strong>：若在 LM-Studio 的 Developer 頁面開啟了 <code>Require Authentication</code>，請確保這裡輸入的是對應產生的 API Token。<br>
+                    &nbsp;&nbsp;3. <strong>Cloudflare Access 阻擋</strong>：若使用了 Cloudflare Access 保護網域，請暫時關閉 Access Policy 或將手機 IP 加白。<br><br>
+                    • <strong>推薦穿透（免 Proxy）</strong>：終端機執行<br>
+                    &nbsp;&nbsp;<code>cloudflared tunnel --url http://localhost:1234</code><br>
+                    &nbsp;&nbsp;直接將產生的 <code>https://xxx.trycloudflare.com</code> 填入 API URL，此時 Proxy 欄位留空。
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">◉ 環境鏡頭</div>
+                <div class="camera-box">
+                    <video id="videoElement" autoplay playsinline></video>
+                    <div class="cam-placeholder" id="camPlaceholder">
+                        <div class="icon">📷</div>
+                        <div>點擊下方開啟鏡頭</div>
+                    </div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-secondary" onclick="startCamera()">📷 開啟</button>
+                    <button class="btn btn-secondary" onclick="stopCamera()">⏹ 關閉</button>
+                    <button class="btn btn-success" onclick="analyzeFengShui()">🔮 分析</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="statusMessage"></div>
+        <div class="footer">AI Feng Shui Analyzer · LM-Studio 相容</div>
+    </div>
+
+    <script>
+        let stream = null, models = [];
+
+        function saveConfig(url, key, proxy) {
+            try {
+                localStorage.setItem('fengshui_apiUrl', url || '');
+                localStorage.setItem('fengshui_apiKey', key || '');
+                localStorage.setItem('fengshui_proxyUrl', proxy || '');
+            } catch(e) {}
+        }
+        function loadConfig() {
+            try {
+                return {
+                    url: localStorage.getItem('fengshui_apiUrl') || '',
+                    key: localStorage.getItem('fengshui_apiKey') || '',
+                    proxy: localStorage.getItem('fengshui_proxyUrl') || ''
+                };
+            } catch(e) { return {url:'', key:'', proxy:''}; }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const badge = document.getElementById('protocolBadge');
+            if (location.protocol === 'https:') {
+                badge.textContent = '🔒 HTTPS · 建議搭配 cloudflared 免 Proxy 運行';
+                badge.className = 'badge warn';
+            } else if (location.protocol === 'file:') {
+                badge.textContent = '📁 本機檔案 · 可直接連線 LM-Studio';
+            } else {
+                badge.textContent = '🌐 ' + location.protocol.replace(':', '') + ' · 可直接連線 LM-Studio';
+            }
+
+            const cfg = loadConfig();
+            if (cfg.url) document.getElementById('apiUrl').value = cfg.url;
+            if (cfg.key) document.getElementById('apiKey').value = cfg.key;
+            if (cfg.proxy) document.getElementById('proxyUrl').value = cfg.proxy;
+            if (cfg.url) setTimeout(() => connectToLMStudio(), 500);
+
+            if (('ontouchstart' in window) || navigator.maxTouchPoints > 0) {
+                document.querySelectorAll('input').forEach(i => {
+                    i.addEventListener('focus', () => {
+                        setTimeout(() => { try { i.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch(e){} }, 400);
+                    });
+                });
+            }
+        });
+
+        function toggleHelp() {
+            document.getElementById('helpBox').classList.toggle('show');
+        }
+
+        function getRequestConfig(path) {
+            let url = document.getElementById('apiUrl').value.trim().replace(/\/+$/, '');
+            const proxy = document.getElementById('proxyUrl').value.trim().replace(/\/+$/, '');
+            const key = document.getElementById('apiKey').value.trim();
+
+            // 確保路徑處理正確，過濾掉 /v1 重複拼接的問題
+            if (!url.endsWith('/v1')) {
+                url = url + '/v1';
+            }
+            
+            const targetUrl = url + path;
+
+            let fetchUrl = targetUrl;
+            if (proxy) {
+                fetchUrl = proxy + '/' + encodeURIComponent(targetUrl);
+            }
+
+            const headers = { 'Content-Type': 'application/json' };
+            if (key) {
+                headers['Authorization'] = 'Bearer ' + key;
+            }
+
+            return { fetchUrl, headers };
+        }
+
+        async function connectToLMStudio() {
+            const url = document.getElementById('apiUrl').value.trim();
+            const key = document.getElementById('apiKey').value.trim();
+            const proxy = document.getElementById('proxyUrl').value.trim();
+            if (!url) { showMsg('請輸入 API URL', 'error'); return; }
+
+            showMsg('正在連線 ...', 'info');
+            try {
+                const { fetchUrl, headers } = getRequestConfig('/models');
+                const r = await fetch(fetchUrl, { headers, mode: 'cors' });
+
+                let body = '';
+                try { body = await r.text(); } catch(e) {}
+
+                if (r.status === 401) {
+                    let hint = 'HTTP 401 認證失敗。<br><br><strong>排查建議：</strong><br>';
+                    if (proxy) {
+                        hint += '⚠️ 您使用了 CORS Proxy，該 Proxy 可能在轉發時「刪除」了您的 Authorization Header。請嘗試自建 Proxy 或使用不需要 Proxy 的 cloudflared 隧道。<br>';
+                    }
+                    hint += '請確認 LM-Studio -> Developer 設定中的 API Token 是否與此處填寫的 Key 完全一致，且沒有多餘空格。';
+                    throw new Error(hint);
+                }
+                if (r.status === 0 || r.type === 'opaque') {
+                    let hint = 'CORS／混合內容被封鎖。';
+                    if (location.protocol === 'https:' && url.startsWith('http:')) {
+                        hint += ' HTTPS 頁面無法直接連 HTTP 伺服器，請改用 cloudflared HTTPS URL。';
+                    }
+                    throw new Error(hint);
+                }
+                if (!r.ok) throw new Error('HTTP ' + r.status + '，回應：' + body.slice(0, 150));
+
+                let d;
+                try { d = JSON.parse(body); } catch(e) { throw new Error('伺服器回應非 JSON：' + body.slice(0, 150)); }
+
+                let list = [];
+                if (d.data && Array.isArray(d.data)) list = d.data;
+                else if (d.models && Array.isArray(d.models)) list = d.models;
+
+                if (!list.length) throw new Error(
+                    'LM-Studio 未載入任何模型。<br><br>' +
+                    '請在 LM-Studio 中：<br>' +
+                    '1. 確認已載入一個模型（點擊模型名稱旁的 ▶ 按鈕）<br>' +
+                    '2. 檢查視窗左下角是否顯示 <strong>Running</strong><br>' +
+                    '3. 若 API Keys 有設定，確認此 Key 在允許清單中<br>' +
+                    '4. 重新啟動 LM-Studio 後再試'
+                );
+
+                models = list.map(m => ({ id: m.id, name: m.name || m.id }));
+                saveConfig(url, key, proxy);
+
+                const badge = document.getElementById('modelBadge');
+                badge.classList.add('show');
+                document.getElementById('modelName').textContent = models[0].name;
+                document.getElementById('modelCount').textContent = '共 ' + models.length + ' 個';
+
+                showMsg('✅ 連線成功 · 已選用 <strong>' + models[0].name + '</strong>', 'success');
+            } catch (e) {
+                const msg = e.message;
+                if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('net::ERR') || msg.includes('Load failed')) {
+                    showMsg('❌ 連線失敗（瀏覽器無法送達請求）<br><br>' +
+                        '可能原因：<br>' +
+                        '1. cloudflared tunnel 未執行<br>' +
+                        '2. 瀏覽器 CORS 預檢被阻擋<br>' +
+                        '3. 請確認 LM-Studio → Settings → Network 有開啟 CORS<br>' +
+                        '4. 若使用 Proxy，請確認 Proxy 本身是否正常運作', 'error');
+                } else {
+                    showMsg('❌ ' + msg, 'error');
+                }
+            }
+        }
+
+        async function startCamera() {
+            try {
+                const v = { video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } };
+                stream = await navigator.mediaDevices.getUserMedia(v);
+                document.getElementById('videoElement').srcObject = stream;
+                document.getElementById('camPlaceholder').style.display = 'none';
+                showMsg('📷 鏡頭已開啟', 'success');
+            } catch (e) {
+                showMsg('⚠ 無法開啟鏡頭：' + e.message, 'error');
+            }
+        }
+
+        function stopCamera() {
+            if (stream) { stream.getTracks().forEach(t => t.stop()); document.getElementById('videoElement').srcObject = null; }
+            document.getElementById('camPlaceholder').style.display = 'flex';
+            showMsg('鏡頭已關閉', 'info');
+        }
+
+        async function captureFrame() {
+            const video = document.getElementById('videoElement');
+            if (!video.srcObject) throw new Error('請先開啟鏡頭');
+            const c = document.createElement('canvas');
+            c.width = video.videoWidth || 640;
+            c.height = video.videoHeight || 480;
+            c.getContext('2d').drawImage(video, 0, 0);
+            return c.toDataURL('image/jpeg', 0.85).split(',')[1];
+        }
+
+        async function analyzeFengShui() {
+            if (!models.length) { showMsg('請先點擊「測試連接」', 'error'); return; }
+
+            let base64;
+            try {
+                base64 = await captureFrame();
+            } catch(e) {
+                showMsg('⚠ ' + e.message, 'error');
+                return;
+            }
+
+            const modelId = models[0].id;
+            showMsg('🔮 正在請 <strong>' + models[0].name + '</strong> 分析環境風水 ...', 'info');
+
+            const prompt = `你是一位專業的風水大師。請分析這張照片中的居住環境風水，從以下幾點給出建議：
+1. 整體氣場與佈局
+2. 採光、通風、動線
+3. 需要改善的地方
+4. 具體改善建議
+
+請用繁體中文回答，簡潔扼要。`;
+
+            try {
+                const body = JSON.stringify({
+                    model: modelId,
+                    messages: [{
+                        role: 'user',
+                        content: [
+                            { type: 'text', text: prompt },
+                            { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + base64 } }
+                        ]
+                    }],
+                    max_tokens: 1024,
+                    temperature: 0.7
+                });
+
+                const { fetchUrl, headers } = getRequestConfig('/chat/completions');
+
+                const r = await fetch(fetchUrl, {
+                    method: 'POST',
+                    headers: headers,
+                    body
+                });
+
+                let respBody = '';
+                try { respBody = await r.text(); } catch(e) {}
+
+                if (respBody.includes('does not support image') || respBody.includes('image input') || respBody.includes('image.png')) {
+                    throw new Error(
+                        '❌ 模型 <strong>' + models[0].name + '</strong> 不支援圖片分析。<br><br>' +
+                        '請在 LM-Studio 中載入 <strong>支援 Vision 的模型</strong>，例如：<br>' +
+                        '• <code>llava</code> 系列<br>' +
+                        '• <code>moondream</code><br>' +
+                        '• <code>qwen-vl</code> 系列<br>' +
+                        '• <code>gemma-3-vision</code><br><br>' +
+                        '載入後重新點擊「測試連接」再試。'
+                    );
+                }
+
+                if (r.status === 401) {
+                    throw new Error('❌ HTTP 401 認證失敗。請確認您的 API Key 或確認 Proxy 是否將 Authorization 請求頭過濾掉了。');
+                }
+
+                if (!r.ok) {
+                    throw new Error('HTTP ' + r.status + '：' + respBody.slice(0, 200));
+                }
+
+                let d;
+                try { d = JSON.parse(respBody); } catch(e) { throw new Error('回覆非 JSON：' + respBody.slice(0, 150)); }
+
+                const reply = d.choices?.[0]?.message?.content || '（無回覆）';
+                showMsg('🔮 分析結果：<br><br>' + reply.replace(/\n/g, '<br>'), 'success');
+
+            } catch(e) {
+                const msg = e.message;
+                if (msg.includes('Failed to fetch') || msg.includes('net::ERR')) {
+                    showMsg('❌ 無法連線至 LM-Studio，請確認網路連線或 Proxy/Tunnel 設定', 'error');
+                } else {
+                    showMsg(msg, 'error');
+                }
+            }
+        }
+
+        function showMsg(msg, type) {
+            const el = document.getElementById('statusMessage');
+            el.innerHTML = msg;
+            el.className = type;
+            el.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
