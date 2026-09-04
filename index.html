@@ -105,7 +105,16 @@
         .btn-outline {
             background: transparent; border: 1px solid rgba(212,165,116,0.3);
             color: #d4a574; padding: 6px 14px; font-size: 11px; border-radius: 8px; cursor: pointer;
+            touch-action: manipulation; white-space: nowrap;
         }
+        .btn-outline.danger { border-color: rgba(180,80,80,0.35); color: #e8a0a0; }
+
+        .key-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+        .key-note {
+            margin-top: 8px; font-size: 11px; line-height: 1.6;
+            color: rgba(212,165,116,0.75); word-break: break-word;
+        }
+        .key-note.warn { color: #e8a0a0; }
 
         .camera-box {
             width: 100%; height: 220px;
@@ -209,7 +218,12 @@
                 </div>
                 <div class="form-group">
                     <label>API KEY <span class="optional">（選填）</span></label>
-                    <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off">
+                    <input type="password" id="apiKey" placeholder="sk-..." autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false">
+                    <div class="key-row">
+                        <button type="button" class="btn-outline" id="keyToggle" onclick="toggleKeyVisibility()">👁 顯示 Key</button>
+                        <button type="button" class="btn-outline danger" onclick="clearStoredKey()">🗑 清除已存 Key</button>
+                    </div>
+                    <div class="key-note" id="keyNote" style="display:none;"></div>
                 </div>
                 <div class="form-group">
                     <label>
@@ -294,6 +308,22 @@
             if (cfg.proxy) document.getElementById('proxyUrl').value = cfg.proxy;
             if (cfg.url) setTimeout(() => connectToLMStudio(), 500);
 
+            if (cfg.key) {
+                showKeyNote('⚠️ 此欄位已自動填入 <strong>先前儲存的 Key</strong>（畫面為遮罩看不到內容）。' +
+                    '若手機之前存過舊的 Token，或瀏覽器密碼管理器自動帶入其他憑證，就會造成「電腦正常、手機 401」。' +
+                    '請點「👁 顯示 Key」核對，或直接「🗑 清除已存 Key」後重新輸入。', 'warn');
+            }
+
+            document.getElementById('apiKey').addEventListener('input', () => {
+                const v = document.getElementById('apiKey').value;
+                const modified = (v.trim() !== (cfg.key || ''));
+                if (/^\s|\s$/.test(v)) {
+                    showKeyNote('⚠️ 偵測到 Key 前後有空格／換行（已用 · 標示）：<br><code>[' + htmlEscape(v.replace(/\s/g, '·')) + ']</code><br>送出前程式會自動去除前後空白，但仍建議清掉避免混淆。', 'warn');
+                } else if (modified) {
+                    hideKeyNote();
+                }
+            });
+
             if (('ontouchstart' in window) || navigator.maxTouchPoints > 0) {
                 document.querySelectorAll('input').forEach(i => {
                     i.addEventListener('focus', () => {
@@ -305,6 +335,46 @@
 
         function toggleHelp() {
             document.getElementById('helpBox').classList.toggle('show');
+        }
+
+        function htmlEscape(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+        function targetHostLabel(u) {
+            try {
+                const parsed = new URL(u);
+                return parsed.host + parsed.pathname;
+            } catch(e) {
+                return String(u || '');
+            }
+        }
+        function toggleKeyVisibility() {
+            const el = document.getElementById('apiKey');
+            const btn = document.getElementById('keyToggle');
+            const showing = el.type !== 'password';
+            el.type = showing ? 'password' : 'text';
+            btn.textContent = showing ? '👁 顯示 Key' : '🙈 隱藏 Key';
+            el.focus();
+        }
+        function clearStoredKey() {
+            const el = document.getElementById('apiKey');
+            el.value = '';
+            try { localStorage.setItem('fengshui_apiKey', ''); } catch(e) {}
+            hideKeyNote();
+            showKeyNote('✅ 已清除先前儲存的 Key。請現在重新貼上正確 Token 再按「測試連接」。');
+            el.focus();
+        }
+        function showKeyNote(msg, type) {
+            const n = document.getElementById('keyNote');
+            n.innerHTML = msg;
+            n.className = 'key-note' + (type === 'warn' ? ' warn' : '');
+            n.style.display = 'block';
+        }
+        function hideKeyNote() {
+            const n = document.getElementById('keyNote');
+            if (n) n.style.display = 'none';
         }
 
         function getRequestConfig(path) {
@@ -347,11 +417,20 @@
                 try { body = await r.text(); } catch(e) {}
 
                 if (r.status === 401) {
-                    let hint = 'HTTP 401 認證失敗。<br><br><strong>排查建議：</strong><br>';
+                    const sentKey = document.getElementById('apiKey').value.trim();
+                    let hint = 'HTTP 401 認證失敗（LM-Studio 端拒絕此請求）。<br><br><strong>排查建議：</strong><br>';
+                    hint += '① 此欄位可能被自動填入「先前儲存」或「手機密碼管理器」的舊憑證。<br>' +
+                        '&nbsp;&nbsp;請先點「👁 顯示 Key」核對畫面內容是否與電腦端完全一致（含有無多餘空格／隱藏字元），再按「🗑 清除已存 Key」重新貼上。<br>';
                     if (proxy) {
-                        hint += '⚠️ 您使用了 CORS Proxy，該 Proxy 可能在轉發時「刪除」了您的 Authorization Header。請嘗試自建 Proxy 或使用不需要 Proxy 的 cloudflared 隧道。<br>';
+                        hint += '② ⚠️ 您使用了 CORS Proxy，該 Proxy 可能在轉發時「刪除」Authorization Header，導致伺服器以為沒帶 Key。<br>' +
+                            '&nbsp;&nbsp;請改用 cloudflared 隧道（Proxy 欄位留空）再試。<br>';
                     }
-                    hint += '請確認 LM-Studio -> Developer 設定中的 API Token 是否與此處填寫的 Key 完全一致，且沒有多餘空格。';
+                    hint += '<br><strong>本次實際送出的請求資訊：</strong><br>' +
+                        '・目標伺服器：<code>' + htmlEscape(targetHostLabel(fetchUrl)) + '</code><br>' +
+                        '・Authorization：<code>' + (sentKey ? '已帶上（Key 共 ' + sentKey.length + ' 字元，前 4 碼：' + htmlEscape(sentKey.slice(0, 4)) + '…）' : '未帶上！Key 欄位是空的') + '</code>';
+                    if (body) {
+                        hint += '<br>・LM-Studio 原始回應：<br><code>' + htmlEscape(body.slice(0, 250)) + '</code>';
+                    }
                     throw new Error(hint);
                 }
                 if (r.status === 0 || r.type === 'opaque') {
@@ -491,7 +570,7 @@
                 }
 
                 if (r.status === 401) {
-                    throw new Error('❌ HTTP 401 認證失敗。請確認您的 API Key 或確認 Proxy 是否將 Authorization 請求頭過濾掉了。');
+                    throw new Error('❌ HTTP 401 認證失敗。<br>請回上一欄點「👁 顯示 Key」核對是否為正確 Token，或按「🗑 清除已存 Key」重新貼上。若「測試連接」成功但這裡失敗，通常是 Key 在送出瞬間被手機密碼管理器換成別的憑證，請改用「清除已存 Key」後再輸入一次。');
                 }
 
                 if (!r.ok) {
