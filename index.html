@@ -427,7 +427,7 @@
                     }
                     hint += '<br><strong>本次實際送出的請求資訊：</strong><br>' +
                         '・目標伺服器：<code>' + htmlEscape(targetHostLabel(fetchUrl)) + '</code><br>' +
-                        '・Authorization：<code>' + (sentKey ? '已帶上（Key 共 ' + sentKey.length + ' 字元，前 4 碼：' + htmlEscape(sentKey.slice(0, 4)) + '…）' : '未帶上！Key 欄位是空的') + '</code>';
+                        '・Authorization：<code>' + (sentKey ? '已帶上（Key 共 ' + sentKey.length + ' 字元，前 4 碼：' + htmlEscape(sentKey.slice(0, 4)) + '…，末 4 碼：…' + htmlEscape(sentKey.slice(-4)) + '）' : '未帶上！Key 欄位是空的') + '</code>';
                     if (body) {
                         hint += '<br>・LM-Studio 原始回應：<br><code>' + htmlEscape(body.slice(0, 250)) + '</code>';
                     }
